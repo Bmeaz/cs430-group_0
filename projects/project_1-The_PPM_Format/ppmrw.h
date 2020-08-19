@@ -1,17 +1,26 @@
 #ifndef PPMRW_H_INCLUDE
 #define PPMRW_H_INCLUDE
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 
-////////////////////////////   validArgCnt  //////////////////////////////
-// checks if proper amount of arguments were given
-// user should given for arguments
+char EMPTY_STR[0] = "";       // Empty sting
+
+const int VALID_CODE = 0;     // Success code
+const int ERR_CODE = 1;       // Default error code
+const int IN_ERR_CODE = 2;    // Input error code
+const int MAX_STR_LEN = 150;  // Maximum string length
+
+/////////////////////////////////   fail  ///////////////////////////////
+// prints error message and exits program
 // parameters: 
-//      int argc: parameter for number of arguments
-// return:
-//      bool isValid: true for correct num of arguments, false otherwise
-//////////////////////////////////////////////////////////////////////////
-bool validArgCnt( int argc );
-
+//      char *errMsg: string containing error message
+//      const int errCode: value of type of error
+////////////////////////////////////////////////////////////////////////// 
+void fail (char *errMsg, const int errCode);
 
 ////////////////////////////   isValidInput  /////////////////////////////
 // checks every user argument to ensure they are vaild
@@ -23,9 +32,9 @@ bool validArgCnt( int argc );
 //      char *output: output file given by the user
 //                needs to be in form of .ppm
 // return:
-//      bool isValid: true if all values are correct, false otherwise
+//      char* outStr: sting containing the errMsg, empty string if no error
 ////////////////////////////////////////////////////////////////////////// 
-bool isValidInput( int pattern, char *input, char *output );
+char *isValidInput (int pattern, char *input, char *output);
 
 
 ////////////////////////////   isValidForm  //////////////////////////////
@@ -36,7 +45,7 @@ bool isValidInput( int pattern, char *input, char *output );
 // return:
 //      bool isValid: true if valid form, false otherwise
 ////////////////////////////////////////////////////////////////////////// 
-bool isValidForm( int form );
+bool isValidForm (int form);
 
 
 ////////////////////////////   fileExists  ///////////////////////////////
@@ -46,7 +55,7 @@ bool isValidForm( int form );
 // return:
 //      bool fileExists: true if file is found, false otherwise
 ////////////////////////////////////////////////////////////////////////// 
-bool fileExists(char *filename);
+bool fileExists (char *filename);
 
 
 ////////////////////////////   isFileType  ///////////////////////////////
@@ -57,7 +66,7 @@ bool fileExists(char *filename);
 // return:
 //      bool isValid: true if file ends in the suffix given for the filetype, false otherwise
 ////////////////////////////////////////////////////////////////////////// 
-bool isFileType( char *filename, char *fileType);
+bool isFileType (char *filename, char *fileType);
 
 
 ////////////////////////////   main  ///////////////////////////////
