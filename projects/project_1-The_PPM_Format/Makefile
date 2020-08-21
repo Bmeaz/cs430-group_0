@@ -8,4 +8,4 @@ ppmrw: ppmrw.c
 	$(CC) $(CFLAGS) ppmrw.c -o ppmrw
 	
 clean:
-	$(RM) ppmrw *~
+	$(RM) ppmrw *~ *.ppm

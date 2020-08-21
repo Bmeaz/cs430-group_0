@@ -3,7 +3,15 @@
 const int VALID_FORMS[] = {3, 6};   // Vaild types of forms accepted
 char PPM_IMAGE[4] = ".ppm";       // Valid type of input file
 
-////////////////////////////   inValidInput  /////////////////////////////
+
+////////////////////////////   append  /////////////////////////////
+void append (char* str, char character) {
+    int len = strlen(str);
+    str[len]= character;
+    str[len+1] = '\0';
+   }
+   
+////////////////////////////   fail  /////////////////////////////
 void fail (char *errMsg, const int errCode) {
 
     fprintf(stderr, "\nError: %s\n\n", errMsg);
@@ -16,11 +24,40 @@ void fail (char *errMsg, const int errCode) {
     exit(ERR_CODE);
 }
 
-void append (char* str, char c) {
-    int len = strlen(str);
-    str[len]= c;
-    str[len+1] = '\0';
-   }
+////////////////////////////   fileExists  ///////////////////////////////
+bool fileExists (char *filename) {
+     bool fileExists = false;
+     FILE *file = fopen(filename, "r");
+
+     // opens file and checks if it exists
+     if (file != NULL) {
+         fileExists = true;
+         fclose(file);
+     }
+     return fileExists;
+}
+
+////////////////////////////   isFileType  ///////////////////////////////
+bool isFileType (char *filename, char *fileType) {
+    char *curFileType = &filename[strlen(filename) - strlen(fileType)];
+    return strcmp(curFileType, fileType) == 0;
+}
+
+////////////////////////////   isValidForm  //////////////////////////////
+bool isValidForm (int form)   {
+     bool isValid = false;
+     int numForms = sizeof(VALID_FORMS)/(VALID_FORMS[0]);
+
+     // loop through all valid forms
+     for( int curForm = 0; curForm < numForms; curForm++ ) {
+         // if form found, change flag to true
+         if (form == VALID_FORMS[curForm]) {
+             isValid = true;
+         }
+     }
+     return isValid;
+}
+   
 ////////////////////////////   isValidInput  /////////////////////////////
 char *isValidInput (int form, char *input, char *output) {
     char *outStr;
@@ -54,60 +91,6 @@ char *isValidInput (int form, char *input, char *output) {
     outStr = msg;
     return outStr;
 }
-
-
-////////////////////////////   isValidForm  //////////////////////////////
-bool isValidForm (int form)   {
-     bool isValid = false;
-     int numForms = sizeof(VALID_FORMS)/(VALID_FORMS[0]);
-
-     // loop through all valid forms
-     for( int curForm = 0; curForm < numForms; curForm++ ) {
-         // if form found, change flag to true
-         if (form == VALID_FORMS[curForm])
-            {
-             isValid = true;
-            }
-     }
-     return isValid;
-}
-
-
-int validInt (char string[]) {
-    bool isValid = true;
-    int intVal = PPM_HDR_ERR;
-    for (int len = 0; len < strlen(string); len++) {
-        if (string[len] <= '0' && string[len] >= '9') {
-           isValid = false;
-        }
-    }
-    if (isValid) {
-       intVal = atoi(string);
-    }
-    return intVal;
-}
-
-
-////////////////////////////   fileExists  ///////////////////////////////
-bool fileExists (char *filename) {
-     bool fileExists = false;
-     FILE *file = fopen(filename, "r");
-
-     // opens file and checks if it exists
-     if (file != NULL) {
-         fileExists = true;
-         fclose(file);
-     }
-     return fileExists;
-}
-
-
-////////////////////////////   isFileType  ///////////////////////////////
-bool isFileType (char *filename, char *fileType) {
-     char *curFileType = &filename[strlen(filename) - strlen(fileType)];
-     return strcmp(curFileType, fileType) == 0;
-}
-
 
 /////////////////////////////   readPPM ////////////////////////////////////
 void readPPM(char *filename, int form) {
@@ -188,6 +171,22 @@ void readPPM(char *filename, int form) {
      printf("\n\tHeader Info [form: P%d, w: %d, h: %d, v: %d]\n", form, width, height, maxColVal);
      fclose(file);
 }
+
+////////////////////////////   validInt  //////////////////////////////
+int validInt (char string[]) {
+    bool isValid = true;
+    int intVal = PPM_HDR_ERR;
+    for (int len = 0; len < strlen(string); len++) {
+        if (string[len] <= '0' && string[len] >= '9') {
+           isValid = false;
+        }
+    }
+    if (isValid) {
+       intVal = atoi(string);
+    }
+    return intVal;
+}
+
 
 ////////////////////////////   MAIN  ///////////////////////////////
 int main (int argc, char *argv[]) {

@@ -8,14 +8,23 @@
 #include <string.h>
 #include <ctype.h>
 
-char EMPTY_STR[3] = "   ";       // Empty sting
+char EMPTY_STR[3] = "   ";    // Empty sting
 
 const int VALID_CODE = 0;     // Success code
 const int ERR_CODE = 1;       // Default error code
-const int IN_ERR_CODE = -1;    // Input error code
+const int IN_ERR_CODE = -1;   // Input error code
 const int PPM_HDR_ERR = -2;   // PPM head error code
 const int MAX_STR_LEN = 255;  // Maximum string length
 const int MAX_COLOR = 255;    // Maximum color
+
+
+/////////////////////////////////   append  ///////////////////////////////
+// appends given char to given string and returns string
+// parameters: 
+//      char *str: string that needs appending
+//      char character: character that will be appended
+////////////////////////////////////////////////////////////////////////// 
+void append (char* str, char character);
 
 
 /////////////////////////////////   fail  ///////////////////////////////
@@ -25,31 +34,6 @@ const int MAX_COLOR = 255;    // Maximum color
 //      const int errCode: value of type of error
 ////////////////////////////////////////////////////////////////////////// 
 void fail (char *errMsg, const int errCode);
-
-////////////////////////////   isValidInput  /////////////////////////////
-// checks every user argument to ensure they are vaild
-// parameters: 
-//      int form: PPM form form 
-//                valid form are found at top of file (VALID_TYPES)
-//      char *input: input file given by the user
-//                needs to be in form of .ppm and exist in same directory
-//      char *output: output file given by the user
-//                needs to be in form of .ppm
-// return:
-//      char* outStr: sting containing the errMsg, empty string if no error
-////////////////////////////////////////////////////////////////////////// 
-char *isValidInput (int pattern, char *input, char *output);
-
-
-////////////////////////////   isValidForm  //////////////////////////////
-// checks if given form is a vaild for that the program can use
-// parameters: 
-//      int form: PPM form form 
-//                valid form are found at top of file (VALID_TYPES)
-// return:
-//      bool isValid: true if valid form, false otherwise
-////////////////////////////////////////////////////////////////////////// 
-bool isValidForm (int form);
 
 
 ////////////////////////////   fileExists  ///////////////////////////////
@@ -72,6 +56,42 @@ bool fileExists (char *filename);
 ////////////////////////////////////////////////////////////////////////// 
 bool isFileType (char *filename, char *fileType);
 
+
+////////////////////////////   isValidForm  //////////////////////////////
+// checks if given form is a vaild for that the program can use
+// parameters: 
+//      int form: PPM form form 
+//                valid form are found at top of file (VALID_TYPES)
+// return:
+//      bool isValid: true if valid form, false otherwise
+////////////////////////////////////////////////////////////////////////// 
+bool isValidForm (int form);
+
+
+////////////////////////////   isValidInput  /////////////////////////////
+// checks every user argument to ensure they are vaild
+// parameters: 
+//      int form: PPM form form 
+//                valid form are found at top of file (VALID_TYPES)
+//      char *input: input file given by the user
+//                needs to be in form of .ppm and exist in same directory
+//      char *output: output file given by the user
+//                needs to be in form of .ppm
+// return:
+//      char* outStr: sting containing the errMsg, empty string if no error
+////////////////////////////////////////////////////////////////////////// 
+char *isValidInput (int pattern, char *input, char *output);
+
+
+////////////////////////////   readPPM  ///////////////////////////////
+// reads the PPM and checks if it is valid
+// parameters: 
+//      char *filename: name of the ppm file
+//      int form: the number of the type of form
+////////////////////////////////////////////////////////////////////////// 
+void readPPM(char *filename, int form);
+
+
 ////////////////////////////   fileExists  ///////////////////////////////
 // checks if given string is only made of integers
 // parameters: 
@@ -81,13 +101,6 @@ bool isFileType (char *filename, char *fileType);
 ////////////////////////////////////////////////////////////////////////// 
 int validInt (char string[]);
 
-////////////////////////////   readPPM  ///////////////////////////////
-// reads the PPM and checks if it is valid
-// parameters: 
-//      char *filename: name of the ppm file
-//      int form: the number of the type of form
-////////////////////////////////////////////////////////////////////////// 
-void readPPM(char *filename, int form);
 
 ////////////////////////////   main  ///////////////////////////////
 // runs program
@@ -98,5 +111,6 @@ void readPPM(char *filename, int form);
 //      int: returns integer
 ////////////////////////////////////////////////////////////////////////// 
 int main (int argc, char *argv[]);
+
 
 #endif
