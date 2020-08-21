@@ -10,7 +10,22 @@ void append (char* str, char character) {
     str[len]= character;
     str[len+1] = '\0';
    }
-   
+
+////////////////////////////   charInStr  /////////////////////////////
+bool charInStr (char string[], char character) {
+    bool output = false;
+    
+    // check each char in string to compare with given cahr
+    for (int charNum = 0; charNum < strlen(string); charNum++) {
+    
+        // if chars match return true
+        if (character == string[charNum]) {
+            output = true;
+        }
+    }
+    return output;
+}       
+           
 ////////////////////////////   fail  /////////////////////////////
 void fail (char *errMsg, const int errCode) {
 
@@ -101,16 +116,17 @@ void readPPM(char *filename, int form) {
      int headerVal = 0, width = 0, height = 0, maxColVal = 0;
      
      // check if first to characters are formw
-     if (fgetc(file) != 'P' || fgetc(file) != form +'0') {
-        sprintf(curStr, "First two characters in ppm should be 'P%d'", form);
-        fail(curStr, PPM_HDR_ERR);
+     if (fgetc(file) != 'P' 
+                || fgetc(file) != form +'0' 
+                || !charInStr(SPACE_CHAR, fgetc(file))) {
+        fail("Form type in .ppm file does not match user input", PPM_HDR_ERR);
      }
-     
+     sprintf(curStr, "%c", '\0'); //clear current string
 
      // scan file for header info
      while (!endHeader && curChar != EOF) {
         curChar = fgetc(file);
-
+        
         // current character is a comment
         if (curChar == '#') {
             isComment = true;   
@@ -126,17 +142,17 @@ void readPPM(char *filename, int form) {
         else if (curChar == ' ' && !isComment) {
            
            // Current string is the width
-           if (headerVal == 1 ) {
+           if (headerVal == 0) {
                width = validInt(curStr);
            }
            
            // current string is the height
-           else if (headerVal == 2) {
+           else if (headerVal == 1) {
                height = validInt(curStr);
            }
            
            // current str is the maximum color value
-           else if (headerVal == 3) {
+           else if (headerVal == 2) {
                maxColVal = validInt(curStr);
                endHeader = true;
 
