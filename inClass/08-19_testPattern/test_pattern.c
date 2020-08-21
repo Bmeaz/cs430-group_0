@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
           }
       }
     print_pixmap8(pixmap, width, height);
+    free(pixmap);
   }
 }
 

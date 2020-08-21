@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
     FILE *file = fopen("image.data", "w");
     fwrite(pixmap, 1, pixmap_size, file);
     fclose(file);
+    free(pixmap);
     
   }
 }
