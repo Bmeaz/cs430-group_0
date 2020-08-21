@@ -4,7 +4,6 @@
 #define col 255
 
 // Method Declarations
-void print_pixmap8(uint8_t *pixmap, int width, int height);
 void fail(char* s);
 void change_color(int cur_bar, uint8_t *pixmap);
 int main(int argc, char *argv[]);
@@ -18,17 +17,6 @@ uint8_t bar_color[] = {
   col,   0,   0,
     0,   0, col
 };
-
-// print pixmap
-void print_pixmap8(uint8_t *pixmap, int width, int height) {
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      uint8_t *pixel = &pixmap[4*((y * width) + x)];
-      printf("#%02x%02x%02x ", pixel[0], pixel[1], pixel[2]);
-    }
-    printf("\n");
-  }
-}
 
 // fail case
 void fail(char* s) {
@@ -56,7 +44,8 @@ int main(int argc, char *argv[]) {
   }
 
   // create pixmap
-  uint8_t *pixmap = malloc(width*height*4*sizeof(uint8_t));
+  int pixmap_size = width*height*4;
+  uint8_t *pixmap = malloc(pixmap_size);
   uint8_t *pixel = pixmap;
   
   // Repeat each scanline for the height
@@ -74,8 +63,11 @@ int main(int argc, char *argv[]) {
               pixel += 4;
           }
       }
-    print_pixmap8(pixmap, width, height);
+    
+    FILE *file = fopen("image.data", "w");
+    fwrite(pixmap, 1, pixmap_size, file);
+    fclose(file);
+    
   }
 }
-
 
