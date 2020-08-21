@@ -27,14 +27,14 @@ const int MAX_COLOR = 255;    // Maximum color
 void append (char* str, char character);
 
 
-////////////////////////////   fileExists  ///////////////////////////////
+////////////////////////////   charInStr  ///////////////////////////////
 // checks if given char is in given char array
 // parameters: 
 //      char string[]: array of char
 //      char character: given character
 // return:
 //      bool output: if chararter is in string[]
-////////////////////////////   charInStr  /////////////////////////////
+////////////////////////////////////////////////////////////////////////// 
 bool charInStr (char string[], char character);
 
 
