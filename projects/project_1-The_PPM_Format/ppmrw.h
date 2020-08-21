@@ -6,15 +6,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 char EMPTY_STR[3] = "   ";       // Empty sting
 
 const int VALID_CODE = 0;     // Success code
 const int ERR_CODE = 1;       // Default error code
-const int IN_ERR_CODE = 2;    // Input error code
-const int PPM_ERR_CODE = 3;
+const int IN_ERR_CODE = -1;    // Input error code
+const int PPM_HDR_ERR = -2;   // PPM head error code
 const int MAX_STR_LEN = 255;  // Maximum string length
 const int MAX_COLOR = 255;    // Maximum color
+
 
 /////////////////////////////////   fail  ///////////////////////////////
 // prints error message and exits program
@@ -70,16 +72,22 @@ bool fileExists (char *filename);
 ////////////////////////////////////////////////////////////////////////// 
 bool isFileType (char *filename, char *fileType);
 
+////////////////////////////   fileExists  ///////////////////////////////
+// checks if given string is only made of integers
+// parameters: 
+//      char string[]: string value containing integers
+// return:
+//      int of string if valid, error code otherwise
+////////////////////////////////////////////////////////////////////////// 
+int validInt (char string[]);
 
 ////////////////////////////   readPPM  ///////////////////////////////
 // reads the PPM and checks if it is valid
 // parameters: 
 //      char *filename: name of the ppm file
 //      int form: the number of the type of form
-// return:
-//      char* string of the output message
 ////////////////////////////////////////////////////////////////////////// 
-char *readPPM(char *filename, int form);
+void readPPM(char *filename, int form);
 
 ////////////////////////////   main  ///////////////////////////////
 // runs program

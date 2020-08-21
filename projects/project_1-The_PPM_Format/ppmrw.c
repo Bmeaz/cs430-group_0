@@ -16,7 +16,11 @@ void fail (char *errMsg, const int errCode) {
     exit(ERR_CODE);
 }
 
-
+void append (char* str, char c) {
+    int len = strlen(str);
+    str[len]= c;
+    str[len+1] = '\0';
+   }
 ////////////////////////////   isValidInput  /////////////////////////////
 char *isValidInput (int form, char *input, char *output) {
     char *outStr;
@@ -68,6 +72,22 @@ bool isValidForm (int form)   {
      return isValid;
 }
 
+
+int validInt (char string[]) {
+    bool isValid = true;
+    int intVal = PPM_HDR_ERR;
+    for (int len = 0; len < strlen(string); len++) {
+        if (string[len] <= '0' && string[len] >= '9') {
+           isValid = false;
+        }
+    }
+    if (isValid) {
+       intVal = atoi(string);
+    }
+    return intVal;
+}
+
+
 ////////////////////////////   fileExists  ///////////////////////////////
 bool fileExists (char *filename) {
      bool fileExists = false;
@@ -90,23 +110,83 @@ bool isFileType (char *filename, char *fileType) {
 
 
 /////////////////////////////   readPPM ////////////////////////////////////
-char *readPPM(char *filename, int form) {
+void readPPM(char *filename, int form) {
      FILE *file = fopen(filename, "r");
-     char curForm[MAX_STR_LEN];
-     sprintf(curForm, "P%d", form); 
-     char buffer[MAX_STR_LEN];
-     int scanline = 0;
+     char curStr[MAX_STR_LEN];
+     char curChar = ' ';
+     bool isComment = false, endHeader = false;
+     int headerVal = 0, width = 0, height = 0, maxColVal = 0;
      
-     // scan each line of the file
-     while(fscanf(file, "%s", buffer) != EOF ) {
-
-         // First Line: Checks if first line in header is the same as form
-         if (scanline == 0 && strcmp(buffer, curForm) != 0) {
-            return("Header in ppm does not match the form given");
-         }
-         scanline++;
+     // check if first to characters are formw
+     if (fgetc(file) != 'P' || fgetc(file) != form +'0') {
+        sprintf(curStr, "First two characters in ppm should be 'P%d'", form);
+        fail(curStr, PPM_HDR_ERR);
      }
-     return EMPTY_STR; 
+     
+
+     // scan file for header info
+     while (!endHeader && curChar != EOF) {
+        curChar = fgetc(file);
+
+        // current character is a comment
+        if (curChar == '#') {
+            isComment = true;   
+        }
+        
+        // current char is the end of a comment
+        else if (curChar == '\n' && isComment) {
+           isComment = false;  
+           sprintf(curStr, "%c", '\0'); //clear current string
+        }
+        
+        // current character is not a space or we are within comment
+        else if (curChar == ' ' && !isComment) {
+           
+           // Current string is the width
+           if (headerVal == 1 ) {
+               width = validInt(curStr);
+           }
+           
+           // current string is the height
+           else if (headerVal == 2) {
+               height = validInt(curStr);
+           }
+           
+           // current str is the maximum color value
+           else if (headerVal == 3) {
+               maxColVal = validInt(curStr);
+               endHeader = true;
+
+           }
+           headerVal ++;
+           sprintf(curStr, "%c", '\0'); //clear current string
+        }
+        
+        // char should not be in header unless in comment, fail if found
+        else if (curChar >= '!' && curChar >= '~' && !isComment) {
+            fail("invalid char found in ppm header", PPM_HDR_ERR);
+        }
+        
+        // add current character to the string
+        else {
+           append(curStr, curChar);  
+        }
+        
+     }
+
+     // Not enough information in header
+     if (!endHeader ) {
+        fail("incorrect header form, missing a value or endspace", PPM_HDR_ERR);
+     }
+     
+     // invalid information in header
+     else if (height <= 0 || width <= 0 || maxColVal < 0 ) {
+        fail("a value in the header file in not a valid positive integer", PPM_HDR_ERR);
+     }
+     
+     // temp output for development
+     printf("\n\tHeader Info [form: P%d, w: %d, h: %d, v: %d]\n", form, width, height, maxColVal);
+     fclose(file);
 }
 
 ////////////////////////////   MAIN  ///////////////////////////////
@@ -129,12 +209,8 @@ int main (int argc, char *argv[]) {
     }
 
     // read the PPM, output output message to outMsg
-    strcpy(outMsg, readPPM(input, form));
+    readPPM(input, form);
     
-    //  if PPM file failed to read
-    if (strcmp(outMsg, EMPTY_STR) != 0) {
-        fail(outMsg, PPM_ERR_CODE);
-    }
     
     printf("\nEnd of Program\n");
     return VALID_CODE;
