@@ -84,7 +84,7 @@ bool fileExists (char *filename) {
 
 ////////////////////////////   isFileType  ///////////////////////////////
 bool isFileType (char *filename, char *fileType) {
-     char *curFileType = &filename[strlen(filename) -strlen(fileType)];
+     char *curFileType = &filename[strlen(filename) - strlen(fileType)];
      return strcmp(curFileType, fileType) == 0;
 }
 
@@ -111,18 +111,16 @@ char *readPPM(char *filename, int form) {
 
 ////////////////////////////   MAIN  ///////////////////////////////
 int main (int argc, char *argv[]) {
-    int form;                  // user given form int
-    char *input;               // user given input file
-    char *output;              // user given output file
     char outMsg[MAX_STR_LEN];  // output message
 
     // number of arguments is incorrect
     if (argc != 4) {
        fail("Invaild number of arguments", IN_ERR_CODE);
     }
-    form = atoi(argv[1]);
-    input = argv[2];
-    output = argv[3];
+    
+    int form = atoi(argv[1]);
+    char *input = argv[2];
+    char *output = argv[3];
     strcpy(outMsg, isValidInput(form, input, output));
 
     // argument given is invalid
