@@ -6,7 +6,7 @@ char PPM_IMAGE[4] = ".ppm";       // Valid type of input file
 ////////////////////////////   append  /////////////////////////////
 void append (char* str, char character) {
     int len = strlen(str);
-    str[len]= character;
+    str[len] = character;
     str[len+1] = '\0';
    }
 
@@ -31,10 +31,15 @@ void clearStr(char str[]) {
 ////////////////////////////   fail  /////////////////////////////
 void fail (char *errMsg, const int errCode) {
     fprintf(stderr, "\nError: %s\n\n", errMsg);
-    // if error caused by stoopid user input
+    // error caused by stoopid user input
     if (errCode == IN_ERR_CODE) {
-        printf("\tArguments should be: ./ppmrw <format> <input file> <output file>\n");
+        printf("\tArguments should be: ./ppmrw <format> <input> <output>\n");
         printf("\t\tExample: ./ppmrw 6 input.ppm output.ppm\n\n");
+    }
+    // error code caused by invaild header
+    else if (errCode == PPM_HDR_ERR) {
+        printf("\tHeader should contain form, width, height and max color value\n");
+        printf("\t\tExample: P6 500 500 255\n\n");
     }
     exit(ERR_CODE);
 }
@@ -107,12 +112,12 @@ void readPPM(char *filename, int form) {
      bool isComment = false, endHeader = false;
      int headerVal = 0, width = 0, height = 0, maxColVal = 0;
      
-     // check if first two char are P + form and the third char is a end character
+     // first two char are not P and form or third char is not an end character
      char first = fgetc(file), second = fgetc(file), third = fgetc(file);
      if (first != 'P' || second != form +'0' || !charInStr(SPACE_CHAR, third)) {
          fail("form type in .ppm file does not match user input", PPM_HDR_ERR);
      }
-     // if third char is comment, set flag
+     // third char is comment, set flag
      if( third == '#') {
          isComment = true;
      }
@@ -130,13 +135,13 @@ void readPPM(char *filename, int form) {
         else if (!isComment) {
 	   int strToInt = validInt(curStr);
 	   
-	   // if curChar is comment Character,set Flag
+	   // current char in file is comment - set flag
            if (curChar == '#') {
                isComment = true;
            }
-	   // if current char is not endspace then apeend char to current string
+	   // current char is not endspace - append char to sting if an integer
            if (!charInStr(SPACE_CHAR, curChar)) {
-               // if current char is not an integer or a endspace it is invaild
+               // current char is not an integer or a endspace - fail
                if (strToInt == PPM_HDR_ERR) {
                     fail("invalid character found in header", PPM_HDR_ERR);
                }
