@@ -3,7 +3,6 @@
 const int VALID_FORMS[] = {3, 6};   // Vaild types of forms accepted
 char PPM_IMAGE[4] = ".ppm";       // Valid type of input file
 
-
 ////////////////////////////   append  /////////////////////////////
 void append (char* str, char character) {
     int len = strlen(str);
@@ -14,7 +13,6 @@ void append (char* str, char character) {
 ////////////////////////////   charInStr  /////////////////////////////
 bool charInStr (char string[], char character) {
     bool output = false;
- 
     // check each char in string to compare with given cahr
     for (int charNum = 0; charNum < strlen(string); charNum++) {
         // if chars match return true
@@ -32,9 +30,7 @@ void clearStr(char str[]) {
 
 ////////////////////////////   fail  /////////////////////////////
 void fail (char *errMsg, const int errCode) {
-
     fprintf(stderr, "\nError: %s\n\n", errMsg);
-
     // if error caused by stoopid user input
     if (errCode == IN_ERR_CODE) {
         printf("\tArguments should be: ./ppmrw <format> <input file> <output file>\n");
@@ -47,7 +43,6 @@ void fail (char *errMsg, const int errCode) {
 bool fileExists (char *filename) {
      bool fileExists = false;
      FILE *file = fopen(filename, "r");
-
      // opens file and checks if it exists
      if (file != NULL) {
          fileExists = true;
@@ -66,7 +61,6 @@ bool isFileType (char *filename, char *fileType) {
 bool isValidForm (int form)   {
      bool isValid = false;
      int numForms = sizeof(VALID_FORMS)/(VALID_FORMS[0]);
-
      // loop through all valid forms
      for( int curForm = 0; curForm < numForms; curForm++ ) {
          // if form found, change flag to true
@@ -81,7 +75,6 @@ bool isValidForm (int form)   {
 char *isValidInput (int form, char *input, char *output) {
     char *outStr;
     char msg[MAX_STR_LEN];
-
     // First Argument: incorrect form given
     if (!isValidForm(form)) {
        sprintf(msg, "Incorrect form value, This program can only use: P3 and P6");
@@ -102,7 +95,6 @@ char *isValidInput (int form, char *input, char *output) {
     else {
        return EMPTY_STR;
     }
-    
     outStr = msg;
     return outStr;
 }
@@ -120,13 +112,12 @@ void readPPM(char *filename, int form) {
      if (first != 'P' || second != form +'0' || !charInStr(SPACE_CHAR, third)) {
          fail("form type in .ppm file does not match user input", PPM_HDR_ERR);
      }
-        // if third char is comment, set flag
+     // if third char is comment, set flag
      if( third == '#') {
          isComment = true;
      }
      clearStr(curStr);
 
-     
      // scan file for header info
      while (!endHeader && curChar != EOF) {
         curChar = fgetc(file);
@@ -143,7 +134,6 @@ void readPPM(char *filename, int form) {
            if (curChar == '#') {
                isComment = true;
            }
-           
 	   // if current char is not endspace then apeend char to current string
            if (!charInStr(SPACE_CHAR, curChar)) {
                // if current char is not an integer or a endspace it is invaild
@@ -153,7 +143,7 @@ void readPPM(char *filename, int form) {
                append(curStr, curChar); //add char to curStr
            }
            // end of current string
-           else if (validInt(curStr) > 0) {
+           else if (validInt(curStr) >= 0) {
                // current string is the width
                if (headerVal == 0) { 
                    width = validInt(curStr);
@@ -171,7 +161,6 @@ void readPPM(char *filename, int form) {
                }
                clearStr(curStr);
            }
-
         }
      } // end while loop for header
      

@@ -10,6 +10,7 @@
 
 char EMPTY_STR[3] = "   ";    // Empty sting
 char SPACE_CHAR[6] = {' ', '\n', '\t', '\r', '#', '\0'};  // end Characters
+
 const int VALID_CODE = 0;     // Success code
 const int ERR_CODE = 1;       // Default error code
 const int IN_ERR_CODE = -1;   // Input error code
