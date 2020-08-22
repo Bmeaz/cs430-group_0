@@ -24,7 +24,12 @@ bool charInStr (char string[], char character) {
     }
     return output;
 }       
-           
+
+////////////////////////////   clearStr  /////////////////////////////  
+void clearStr(char str[]) {
+     sprintf(str, "%c", '\0'); //clear current string
+}
+
 ////////////////////////////   fail  /////////////////////////////
 void fail (char *errMsg, const int errCode) {
 
@@ -110,64 +115,74 @@ void readPPM(char *filename, int form) {
      bool isComment = false, endHeader = false;
      int headerVal = 0, width = 0, height = 0, maxColVal = 0;
      
-     // check if first to characters are formw
-     if (fgetc(file) != 'P' 
-                || fgetc(file) != form +'0' 
-                || !charInStr(SPACE_CHAR, fgetc(file))) {
-        fail("Form type in .ppm file does not match user input", PPM_HDR_ERR);
+     // check if first two char are P + form and the third char is a end character
+     char first = fgetc(file), second = fgetc(file), third = fgetc(file);
+     if (first != 'P' || second != form +'0' || !charInStr(SPACE_CHAR, third)) {
+         fail("form type in .ppm file does not match user input", PPM_HDR_ERR);
      }
-     sprintf(curStr, "%c", '\0'); //clear current string
+        // if third char is comment, set flag
+     if( third == '#') {
+         isComment = true;
+     }
+     clearStr(curStr);
 
+     
      // scan file for header info
      while (!endHeader && curChar != EOF) {
         curChar = fgetc(file);
-        
-        // current character is a comment
-        if (curChar == '#') {
-            isComment = true;   
-        } 
         // current char is the end of a comment
-        else if (curChar == '\n' && isComment) {
-           isComment = false;  
-           sprintf(curStr, "%c", '\0'); //clear current string
+        if (curChar == '\n' && isComment) {
+           isComment = false; 
+           clearStr(curStr);
         }
         // current character is not a space or we are within comment
-        else if (curChar == ' ' && !isComment) {
+        else if (!isComment) {
+	   int strToInt = validInt(curStr);
+	   
+	   // if curChar is comment Character,set Flag
+           if (curChar == '#') {
+               isComment = true;
+           }
            
-           // Current string is the width
-           if (headerVal == 0) {
-               width = validInt(curStr);
+	   // if current char is not endspace then apeend char to current string
+           if (!charInStr(SPACE_CHAR, curChar)) {
+               // if current char is not an integer or a endspace it is invaild
+               if (strToInt == PPM_HDR_ERR) {
+                    fail("invalid character found in header", PPM_HDR_ERR);
+               }
+               append(curStr, curChar); //add char to curStr
            }
-           // current string is the height
-           else if (headerVal == 1) {
-               height = validInt(curStr);
+           // end of current string
+           else if (validInt(curStr) > 0) {
+               // current string is the width
+               if (headerVal == 0) { 
+                   width = validInt(curStr);
+                   headerVal ++;
+               }
+	       // current string is the height
+	       else if (headerVal == 1) {
+	           height = validInt(curStr);
+	           headerVal ++;
+	       }
+               // current str is the maximum color value
+               else if (headerVal == 2) {
+                   maxColVal = validInt(curStr);
+                   endHeader = true;
+               }
+               clearStr(curStr);
            }
-           // current str is the maximum color value
-           else if (headerVal == 2) {
-               maxColVal = validInt(curStr);
-               endHeader = true;
-           }
-           headerVal ++;
-           sprintf(curStr, "%c", '\0'); //clear current string
+
         }
-        // char should not be in header unless in comment, fail if found
-        else if (curChar >= '!' && curChar >= '~' && !isComment) {
-            fail("invalid char found in ppm header", PPM_HDR_ERR);
-        }
-        // add current character to the string
-        else {
-           append(curStr, curChar);  
-        }
-     }
+     } // end while loop for header
+     
      // Not enough information in header
-     if (!endHeader ) {
+     if (!endHeader) {
         fail("incorrect header form, missing a value or endspace", PPM_HDR_ERR);
      } 
      // invalid information in header
      else if (height <= 0 || width <= 0 || maxColVal < 0 ) {
         fail("a value in the header file in not a valid positive integer", PPM_HDR_ERR);
-     }
-     
+     }     
      // temp output for development
      printf("\n\tHeader Info [form: P%d, w: %d, h: %d, v: %d]\n", form, width, height, maxColVal);
      fclose(file);
@@ -177,13 +192,14 @@ void readPPM(char *filename, int form) {
 int validInt (char string[]) {
     bool isValid = true;
     int intVal = PPM_HDR_ERR;
-    
+    int curChar = 0;
     //loop through the string
-    for (int len = 0; len < strlen(string); len++) {
-        // if invalid numberfound, flip flag to flase
-        if (string[len] <= '0' && string[len] >= '9') {
+    while (string[curChar] != '\0') {
+        // if invalid number found, flip flag to false
+        if (!isdigit(string[curChar])) {
            isValid = false;
         }
+        curChar ++;
     }
     // if valid convert string to int
     if (isValid) {

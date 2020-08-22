@@ -9,7 +9,7 @@
 #include <ctype.h>
 
 char EMPTY_STR[3] = "   ";    // Empty sting
-char SPACE_CHAR[5] = {' ', '\n', '\t', '\r', '\0'};
+char SPACE_CHAR[6] = {' ', '\n', '\t', '\r', '#', '\0'};  // end Characters
 const int VALID_CODE = 0;     // Success code
 const int ERR_CODE = 1;       // Default error code
 const int IN_ERR_CODE = -1;   // Input error code
@@ -36,6 +36,14 @@ void append (char* str, char character);
 //      bool output: if chararter is in string[]
 ////////////////////////////////////////////////////////////////////////// 
 bool charInStr (char string[], char character);
+
+
+////////////////////////////   clearStr  /////////////////////////////  
+// clears a char array
+// parameters: 
+//      char str[]: char array to be cleared
+////////////////////////////////////////////////////////////////////////// 
+void clearStr(char str[]);
 
 
 /////////////////////////////////   fail  ///////////////////////////////
