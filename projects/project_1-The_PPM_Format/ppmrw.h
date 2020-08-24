@@ -53,7 +53,7 @@ void clearStr (char str[]);
 //      char *errMsg: string containing error message
 //      const int errCode: value of type of error
 ////////////////////////////////////////////////////////////////////////// 
-void fail (char *errMsg, const int errCode);
+void fail (char *errMsg, const int errCode, FILE* file);
 
 
 ////////////////////////////   fileExists  ///////////////////////////////
@@ -101,15 +101,6 @@ bool isValidForm (int form);
 //      char* outStr: sting containing the errMsg, empty string if no error
 ////////////////////////////////////////////////////////////////////////// 
 char *isValidInput (int pattern, char *input, char *output);
-
-
-////////////////////////////   readPPM  ///////////////////////////////
-// reads the PPM header and checks if it is valid
-// parameters: 
-//      char *filename: name of the ppm file
-//      int form: the number of the type of form
-////////////////////////////////////////////////////////////////////////// 
-void readHeader (char *filename, int form);
 
 
 ////////////////////////////   fileExists  ///////////////////////////////
