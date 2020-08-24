@@ -191,11 +191,11 @@ void readHeader(char *filename, int form) {
      }
      
      // write file if ppm 3 form
-     if (atoi(second) == 3) {
+     if ((int)second == 3) {
          //TODO: write file in ppm 3 form
      } 
      // write file if ppm 6 form
-     else (atoi(second) == 6) {
+     else if ((int)second == 6) {
          //TODO: write file in ppm 6 form
      }
 
