@@ -9,6 +9,7 @@
 #include <ctype.h>
 
 char EMPTY_STR[3] = "   ";    // Empty sting
+char WRITE_SPACE = ' ';
 char SPACE_CHAR[6] = {' ', '\n', '\t', '\r', '#', '\0'};  // end Characters
 
 const int VALID_CODE = 0;     // Success code
@@ -17,7 +18,14 @@ const int IN_ERR_CODE = -1;   // Input error code
 const int PPM_HDR_ERR = -2;   // PPM head error code
 const int MAX_STR_LEN = 255;  // Maximum string length
 const int MAX_COLOR = 255;    // Maximum color
+const int INVALID_INT = -999; // Invalid integer
 
+typedef struct PPM {
+    int form;
+    int width;
+    int height;
+    int maxColVal;
+} PPM;
 
 /////////////////////////////////   append  ///////////////////////////////
 // appends given char to given string and returns string
@@ -26,6 +34,14 @@ const int MAX_COLOR = 255;    // Maximum color
 //      char character: character that will be appended
 ////////////////////////////////////////////////////////////////////////// 
 void append (char* str, char character);
+
+
+////////////////////////////   atComChar  /////////////////////////////
+// checks if char is at the comment char
+// parameters: 
+//      char curChar: character to check if a comment
+////////////////////////////////////////////////////////////////////////// 
+bool atComChar (char curChar);
 
 
 ////////////////////////////   charInStr  ///////////////////////////////
@@ -52,6 +68,7 @@ void clearStr (char str[]);
 // parameters: 
 //      char *errMsg: string containing error message
 //      const int errCode: value of type of error
+//      FILE* file: file to close
 ////////////////////////////////////////////////////////////////////////// 
 void fail (char *errMsg, const int errCode, FILE* file);
 
@@ -88,29 +105,44 @@ bool isFileType (char *filename, char *fileType);
 bool isValidForm (int form);
 
 
-////////////////////////////   isValidInput  /////////////////////////////
-// checks every user argument to ensure they are vaild
+////////////////////////////   ppmP3ToP3  //////////////////////////////
+// converts pmm P3 input file to pmm output file
 // parameters: 
-//      int form: PPM form form 
-//                valid form are found at top of file (VALID_TYPES)
-//      char *input: input file given by the user
-//                needs to be in form of .ppm and exist in same directory
-//      char *output: output file given by the user
-//                needs to be in form of .ppm
-// return:
-//      char* outStr: sting containing the errMsg, empty string if no error
+//      struct PPM ppm: name of the file
+//      FILE* inFile: input file
+//      FILE* outFile: output file
 ////////////////////////////////////////////////////////////////////////// 
-char *isValidInput (int pattern, char *input, char *output);
+void ppmP3ToP3(struct PPM ppm, FILE* inFile, FILE* outFile);
 
 
-////////////////////////////   fileExists  ///////////////////////////////
-// checks if given string is only made of integers
+////////////////////////////   ppmP3ToP6  //////////////////////////////
+// converts pmm P3 input file to pmm P6 output file
 // parameters: 
-//      char string[]: string value containing integers
-// return:
-//      int of string if valid, error code otherwise
+//      struct PPM ppm: name of the file
+//      FILE* inFile: input file
+//      FILE* outFile: output file
 ////////////////////////////////////////////////////////////////////////// 
-int validInt (char string[]);
+void ppmP3ToP6(struct PPM ppm, FILE* inFile, FILE* outFile);
+
+
+////////////////////////////   ppmP6ToP3  //////////////////////////////
+// converts pmm P6 input file to pmm P3 output file
+// parameters: 
+//      struct PPM ppm: name of the file
+//      FILE* inFile: input file
+//      FILE* outFile: output file
+////////////////////////////////////////////////////////////////////////// 
+void ppmP6ToP3(struct PPM ppm, FILE* inFile, FILE* outFile);
+
+
+////////////////////////////   ppmP6ToP6  //////////////////////////////
+// converts pmm P6 input file to pmm P6 output file
+// parameters: 
+//      struct PPM ppm: name of the file
+//      FILE* inFile: input file
+//      FILE* outFile: output file
+////////////////////////////////////////////////////////////////////////// 
+void ppmP6ToP6(struct PPM ppm, FILE* inFile, FILE* outFile);
 
 
 ////////////////////////////   main  ///////////////////////////////
