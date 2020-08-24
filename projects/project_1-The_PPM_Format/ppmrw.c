@@ -105,7 +105,7 @@ char *isValidInput (int form, char *input, char *output) {
 }
 
 /////////////////////////////   readPPM ////////////////////////////////////
-void readPPM(char *filename, int form) {
+void readHeader(char *filename, int form) {
      FILE *file = fopen(filename, "r");
      char curStr[MAX_STR_LEN];
      char curChar = ' ';
@@ -114,8 +114,9 @@ void readPPM(char *filename, int form) {
      
      // first two char are not P and form or third char is not an end character
      char first = fgetc(file), second = fgetc(file), third = fgetc(file);
-     if (first != 'P' || second != form +'0' || !charInStr(SPACE_CHAR, third)) {
-         fail("form type in .ppm file does not match user input", PPM_HDR_ERR);
+     if (first != 'P' || !isValidForm(second) || !charInStr(SPACE_CHAR, third)) {
+         fclose(file);
+         fail("form type in .ppm file is not a valid type", PPM_HDR_ERR);
      }
      // third char is comment, set flag
      if( third == '#') {
@@ -133,7 +134,6 @@ void readPPM(char *filename, int form) {
         }
         // current character is not a space or we are within comment
         else if (!isComment) {
-	   int strToInt = validInt(curStr);
 	   
 	   // current char in file is comment - set flag
            if (curChar == '#') {
@@ -142,7 +142,8 @@ void readPPM(char *filename, int form) {
 	   // current char is not endspace - append char to sting if an integer
            if (!charInStr(SPACE_CHAR, curChar)) {
                // current char is not an integer or a endspace - fail
-               if (strToInt == PPM_HDR_ERR) {
+               if (validInt(curStr) == PPM_HDR_ERR) {
+                    fclose(file);
                     fail("invalid character found in header", PPM_HDR_ERR);
                }
                append(curStr, curChar); //add char to curStr
@@ -159,7 +160,7 @@ void readPPM(char *filename, int form) {
 	           height = validInt(curStr);
 	           headerVal ++;
 	       }
-               // current str is the maximum color value
+               // current string is the maximum color value
                else if (headerVal == 2) {
                    maxColVal = validInt(curStr);
                    endHeader = true;
@@ -171,14 +172,33 @@ void readPPM(char *filename, int form) {
      
      // Not enough information in header
      if (!endHeader) {
+        fclose(file);
         fail("incorrect header form, missing a value or endspace", PPM_HDR_ERR);
      } 
      // invalid information in header
      else if (height <= 0 || width <= 0 || maxColVal < 0 ) {
+        fclose(file);
         fail("a value in the header file in not a valid positive integer", PPM_HDR_ERR);
-     }     
-     // temp output for development
-     printf("\n\tHeader Info [form: P%d, w: %d, h: %d, v: %d]\n", form, width, height, maxColVal);
+     }
+     
+     // read file if ppm 3 form
+     if (form == 3) {
+         //TODO: read file in ppm 3 form
+     }
+     // read file if ppm 6 form
+     else if (form == 6) {
+         //TODO: write file in ppm 6 form
+     }
+     
+     // write file if ppm 3 form
+     if (atoi(second) == 3) {
+         //TODO: write file in ppm 3 form
+     } 
+     // write file if ppm 6 form
+     else (atoi(second) == 6) {
+         //TODO: write file in ppm 6 form
+     }
+
      fclose(file);
 }
 
@@ -221,7 +241,8 @@ int main (int argc, char *argv[]) {
        fail(outMsg, IN_ERR_CODE);
     }
     // read the PPM, output output message to outMsg
-    readPPM(input, form);
+    readHeader(input, form);
+    
     printf("\nEnd of Program\n");
     
     return VALID_CODE;

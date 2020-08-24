@@ -44,7 +44,7 @@ bool charInStr (char string[], char character);
 // parameters: 
 //      char str[]: char array to be cleared
 ////////////////////////////////////////////////////////////////////////// 
-void clearStr(char str[]);
+void clearStr (char str[]);
 
 
 /////////////////////////////////   fail  ///////////////////////////////
@@ -104,12 +104,12 @@ char *isValidInput (int pattern, char *input, char *output);
 
 
 ////////////////////////////   readPPM  ///////////////////////////////
-// reads the PPM and checks if it is valid
+// reads the PPM header and checks if it is valid
 // parameters: 
 //      char *filename: name of the ppm file
 //      int form: the number of the type of form
 ////////////////////////////////////////////////////////////////////////// 
-void readPPM(char *filename, int form);
+void readHeader (char *filename, int form);
 
 
 ////////////////////////////   fileExists  ///////////////////////////////
