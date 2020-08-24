@@ -2,6 +2,11 @@
 
 const int VALID_FORMS[] = {3, 6};   // Vaild types of forms accepted
 char PPM_IMAGE[4] = ".ppm";       // Valid type of input file
+pixel *buffer;
+
+typedef struct pixel {
+  unsigned char r, g, b;
+} pixel;
 
 ////////////////////////////   append  /////////////////////////////
 void append (char* str, char character) {
@@ -106,6 +111,7 @@ char *isValidInput (int form, char *input, char *output) {
 
 /////////////////////////////   readPPM ////////////////////////////////////
 void readHeader(char *filename, int form) {
+     buffer = (Image*)malloc(sizeof(Image));     //allocates memory for buffer
      FILE *file = fopen(filename, "r");
      char curStr[MAX_STR_LEN];
      char curChar = ' ';
@@ -183,24 +189,81 @@ void readHeader(char *filename, int form) {
      
      // read file if ppm 3 form
      if (form == 3) {
-         //TODO: read file in ppm 3 form
-     }
+	int c, r, g, b;
+  	int i = 0;
+  	int length = (*width) * (*height);
+  	/* For each pixel */
+ 	 while (i < length) {
+    	/* While the next character is not EOF  */
+      	if ((c = fgetc(in)) != EOF) {
+        /* Return the character */
+        	ungetc(c, in);
+        	/* Grab the next three integers and assign them to the pixel buffer */
+        	if (fscanf(in, "%d%d%d", &r, &g, &b) == 3) {
+          		buffer[i].r = r;
+          		buffer[i].g = g;
+          		buffer[i].b = b;
+        		}
+      		i++;
+    	       }
+ 	    }
+        }
+
      // read file if ppm 6 form
      else if (form == 6) {
-         //TODO: write file in ppm 6 form
+        unsigned char *inBuf = malloc(sizeof(unsigned char));
+  	int i = 0;
+  	int conv;
+  	int length = (*width) * (*height);
+  	/* while there are bytes to be read in the file */
+  	while (fread(inBuf, 1, 1, in) && i < length) {
+    	/* Get each pixel into the char buffer and add to the pixel buffer */
+    		conv = *inBuf;
+    		buffer[i].r = conv;
+    		fread(inBuf, 1, 1, in);
+    		conv = *inBuf;
+    		buffer[i].g = conv;
+    		fread(inBuf, 1, 1, in);
+    		conv = *inBuf;
+    		buffer[i].b = conv;
+    		i++;
+  	}
      }
      
      // write file if ppm 3 form
      if (atoi(second) == 3) {
-         //TODO: write file in ppm 3 form
-     } 
-     // write file if ppm 6 form
-     else (atoi(second) == 6) {
-         //TODO: write file in ppm 6 form
-     }
-
-     fclose(file);
+  	int i = 0, lineLen = 1;
+  	int length = (*width) * (*height);
+  	fprintf(out, "%d %d %d\n", *width, *height, *maxColVal);
+  	while (i < length) {
+      
+      	if ((35 % lineLen) == 35) {
+        	fprintf(out, "\n");
+        	lineLen = 1;
+      	}
+      	/* Get each pixel and write out its components in their ascii representation */
+      	fprintf(out, "%d ", buffer[i].r);
+      	fprintf(out, "%d ", buffer[i].g);
+      	fprintf(out, "%d ", buffer[i].b);
+      	lineLen++;
+      	i++;
+    	}
 }
+
+	//write file if ppm 6 form
+    else if{ 
+  	int i = 0;
+  	int length = (*width) * (*height);
+  	/* Write the header */
+  	fprintf(out, "%d %d %d %d\n", *width, *height, *maxColVal);
+  	/* Write out each pixel to the file by grabbing its components */
+  	while (i < length) {
+    	fwrite(&(buffer[(i)].r), sizeof(unsigned char), 1, out);
+    	fwrite(&(buffer[(i)].g), sizeof(unsigned char), 1, out);
+    	fwrite(&(buffer[(i)].b), sizeof(unsigned char), 1, out);
+    	i++;
+  	}
+    } 
 
 ////////////////////////////   validInt  //////////////////////////////
 int validInt (char string[]) {
