@@ -25,7 +25,15 @@ typedef struct PPM {
     int width;
     int height;
     int maxColVal;
+    unsigned int *pixmap;
 } PPM;
+
+typedef struct Pixel {
+    unsigned int red;
+    unsigned int green;
+    unsigned int blue;
+    unsigned int alpha;
+} Pixel;
 
 /////////////////////////////////   append  ///////////////////////////////
 // appends given char to given string and returns string
@@ -144,7 +152,7 @@ void ppmP6ToP3(struct PPM ppm, FILE* inFile, FILE* outFile);
 ////////////////////////////////////////////////////////////////////////// 
 void ppmP6ToP6(struct PPM ppm, FILE* inFile, FILE* outFile);
 
-
+void writeHeader(FILE* file, int form, int width, int height, int maxCol);
 ////////////////////////////   main  ///////////////////////////////
 // runs program
 // parameters: 

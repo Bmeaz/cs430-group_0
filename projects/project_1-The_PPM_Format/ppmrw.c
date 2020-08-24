@@ -88,26 +88,26 @@ bool isValidForm (int form)   {
 
 /////////////   P3 To P3  ///////////////////////////////
 void ppmP3ToP3(struct PPM ppm, FILE* inFile, FILE* outFile) {
-   writeHeader( outfp, 3, ppm.width, ppm.height, ppm.maxColVal);
+   writeHeader( outFile, 3, ppm.width, ppm.height, ppm.maxColVal);
    //TODO: write file
 }
 
 /////////////   P3 To P6  ///////////////////////////////
 void ppmP3ToP6(struct PPM ppm, FILE* inFile, FILE* outFile) {
-   writeHeader( outfp, 6, ppm.width, ppm.height, ppm.maxColVal);
+   writeHeader( outFile, 6, ppm.width, ppm.height, ppm.maxColVal);
    //TODO: write file
 }
 
 
 /////////////   P6 To P3  ///////////////////////////////
 void ppmP6ToP3(struct PPM ppm, FILE* inFile, FILE* outFile) {
-   writeHeader( outfp, 3, ppm.width, ppm.height, ppm.maxColVal);
+   writeHeader( outFile, 3, ppm.width, ppm.height, ppm.maxColVal);
    //TODO: write file
 }
 
 /////////////   P6 To P6  ///////////////////////////////
 void ppmP6ToP6(struct PPM ppm, FILE* inFile, FILE* outFile) {
-   writeHeader( outfp, 6, ppm.width, ppm.height, ppm.maxColVal);
+   writeHeader( outFile, 6, ppm.width, ppm.height, ppm.maxColVal);
    //TODO: write file
 }
 
@@ -120,6 +120,7 @@ struct PPM readHeader(FILE* file) {
      char first = fgetc(file), second = fgetc(file), third = fgetc(file);
      bool isComment = false, endHeader = false;
      struct PPM *ppm = malloc(sizeof(PPM));
+     ppm->form = (second-'0');
      ppm->height = INVALID_INT;
      ppm->width = INVALID_INT;
      
@@ -128,15 +129,13 @@ struct PPM readHeader(FILE* file) {
 
          fail("form type in .ppm file is not a valid type", PPM_HDR_ERR, file);
      }
-     isComment = atComChar(curChar);
-     ppm->form = (second-'0');
+     ungetc(third, file);
      clearStr(curStr);
 
      // scan file for header info
      while (!endHeader && curChar != EOF) {
         curChar = fgetc(file);
-        int strToInt = atoi(curStr);
-
+        
         // current char is the end of a comment
         if (curChar == '\n' && isComment) {
            isComment = false; 
@@ -157,17 +156,17 @@ struct PPM readHeader(FILE* file) {
            }
            // end of current string
            else if (ppm->width == INVALID_INT) { 
-               ppm->width = strToInt;
+               ppm->width = atoi(curStr);
                clearStr(curStr);
            }
 	   // current string is the height
 	   else if (ppm->height == INVALID_INT) {
-	       ppm->height = strToInt;
+	       ppm->height = atoi(curStr);
 	       clearStr(curStr);
 	   }
            // current string is the maximum color value
            else {
-               ppm->maxColVal = strToInt;
+               ppm->maxColVal = atoi(curStr);
                endHeader = true;
            }
         }
@@ -183,6 +182,7 @@ struct PPM readHeader(FILE* file) {
         free(ppm);
         fail("a value in the header file in not a valid positive integer", PPM_HDR_ERR, file);
      }
+     
      return *ppm;
 }
 
@@ -223,38 +223,34 @@ int main (int argc, char *argv[]) {
     else if(!isFileType(output, ".ppm")) {
         fail("output file is not of type .ppm", IN_ERR_CODE, NULL);
     }
-      
-    struct PPM ppm = readHeader(file);
+    
+    FILE *inFile = fopen(input, "r");
+    struct PPM ppm = readHeader(inFile);
     //TODO: validate the rest of the input file
     
-    FILE *outfile = fopen(outFile, "w");
-    FILE *infile = fopen(input, "r");
+    FILE *outFile = fopen(output, "w");
     
     // read file if ppm 3 form
     if (ppm.form == 3 && outForm == 3) {
-        //TODO: 
-        ppmP3ToP3(ppm, file, outfile);
+        ppmP3ToP3(ppm, inFile, outFile);
     }
     // read file if ppm 6 form
     else if (ppm.form == 3 && outForm == 6) {
-        //TODO: 
-        ppmP3ToP6(ppm, file, outfile);
+        ppmP3ToP6(ppm, inFile, outFile);
     }
     // write file if ppm 3 form
     if (ppm.form == 6 && outForm == 3) {
-        //TODO: 
-        ppmP6ToP3(ppm, file, outfile);
+        ppmP6ToP3(ppm, inFile, outFile);
 
     } 
     // write file if ppm 6 form
     else if (ppm.form == 6 && outForm == 6) {
-        //TODO: 
-        ppmP6ToP6(ppm, file, outfile);
+        ppmP6ToP6(ppm, inFile, outFile);
 
     }
 
-  
-    fclose(outfile);
+    fclose(inFile);
+    fclose(outFile);
     printf("\nEnd of Program\n");
     return VALID_CODE;
 }
