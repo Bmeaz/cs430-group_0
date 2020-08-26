@@ -16,23 +16,25 @@ const int VALID_CODE = 0;     // Success code
 const int ERR_CODE = 1;       // Default error code
 const int IN_ERR_CODE = -1;   // Input error code
 const int PPM_HDR_ERR = -2;   // PPM head error code
-const int MAX_STR_LEN = 255;  // Maximum string length
+const int PPM_DATA_ERR = -3;   // PPM data error code
+const int MAX_STR_LEN = 100;  // Maximum string length
 const int MAX_COLOR = 255;    // Maximum color
 const int INVALID_INT = -999; // Invalid integer
 
+// structure for a PPM file
 typedef struct PPM {
     int form;
     int width;
     int height;
     int maxColVal;
-    unsigned int *pixmap;
+    unsigned char *pixData;
 } PPM;
 
+// structure for a single Pixel
 typedef struct Pixel {
     unsigned int red;
     unsigned int green;
     unsigned int blue;
-    unsigned int alpha;
 } Pixel;
 
 /////////////////////////////////   append  ///////////////////////////////
@@ -113,46 +115,34 @@ bool isFileType (char *filename, char *fileType);
 bool isValidForm (int form);
 
 
-////////////////////////////   ppmP3ToP3  //////////////////////////////
-// converts pmm P3 input file to pmm output file
+////////////////////////////   readFile  //////////////////////////////
+// reads input file and returns structure ppm containing the information
 // parameters: 
-//      struct PPM ppm: name of the file
-//      FILE* inFile: input file
-//      FILE* outFile: output file
+//      char* filename: name of input file
+// return:
+//      struct PPM ppm: structure containing image information
 ////////////////////////////////////////////////////////////////////////// 
-void ppmP3ToP3(struct PPM ppm, FILE* inFile, FILE* outFile);
+struct PPM readFile(char* filename);
 
 
-////////////////////////////   ppmP3ToP6  //////////////////////////////
-// converts pmm P3 input file to pmm P6 output file
+////////////////////////////   writeP3  //////////////////////////////
+// writes ppm infomation to output file in ppm P3 format
 // parameters: 
-//      struct PPM ppm: name of the file
-//      FILE* inFile: input file
-//      FILE* outFile: output file
+//      struct PPM ppm: structure containing image information
+//      char* outFile: name of output file
 ////////////////////////////////////////////////////////////////////////// 
-void ppmP3ToP6(struct PPM ppm, FILE* inFile, FILE* outFile);
+void writeP3(struct PPM ppm, char* outFile);
 
 
-////////////////////////////   ppmP6ToP3  //////////////////////////////
-// converts pmm P6 input file to pmm P3 output file
+////////////////////////////   writeP6  //////////////////////////////
+// writes ppm infomation to output file in ppm P6 format
 // parameters: 
-//      struct PPM ppm: name of the file
-//      FILE* inFile: input file
-//      FILE* outFile: output file
+//      struct PPM ppm: structure containing image information
+//      char* outFile: name of output file
 ////////////////////////////////////////////////////////////////////////// 
-void ppmP6ToP3(struct PPM ppm, FILE* inFile, FILE* outFile);
+void writeP6(struct PPM ppm, char* outFile);
 
 
-////////////////////////////   ppmP6ToP6  //////////////////////////////
-// converts pmm P6 input file to pmm P6 output file
-// parameters: 
-//      struct PPM ppm: name of the file
-//      FILE* inFile: input file
-//      FILE* outFile: output file
-////////////////////////////////////////////////////////////////////////// 
-void ppmP6ToP6(struct PPM ppm, FILE* inFile, FILE* outFile);
-
-void writeHeader(FILE* file, int form, int width, int height, int maxCol);
 ////////////////////////////   main  ///////////////////////////////
 // runs program
 // parameters: 
