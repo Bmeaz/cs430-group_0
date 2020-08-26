@@ -88,12 +88,11 @@ bool isValidForm (int form)   {
 
 /////////////   P3 To P3  ///////////////////////////////
 void ppmP3ToP3(struct PPM ppm, FILE* inFile, FILE* outFile) {
-    //Takes a given output file and creates the PPM header
+   //Takes a given output file and creates the PPM header
    writeHeader( outFile, 3, ppm.width, ppm.height, ppm.maxColVal);
    //TODO: write file
    //Image stored as ASCII
    //Open the file given as read so we do not change the data
-   FILE *inputFile = fopen(inFile, "r");
 
 }
 
@@ -104,28 +103,28 @@ void ppmP3ToP6(struct PPM ppm, FILE* inFile, FILE* outFile) {
    //TODO: write file
    //Image stored as binary encoding AKA Portable Pixmap rawbits format
    //Open the file given as read so we do not change the data
-   FILE *inputFile = fopen(inFile, "r");
+
 }
 
 
 /////////////   P6 To P3  ///////////////////////////////
 void ppmP6ToP3(struct PPM ppm, FILE* inFile, FILE* outFile) {
-    //Takes a given output file and creates the PPM header
+   //Takes a given output file and creates the PPM header
    writeHeader( outFile, 3, ppm.width, ppm.height, ppm.maxColVal);
    //TODO: write file
    //Image stored as ASCII
    //Open the file given as read so we do not change the data
-   FILE *inputFile = fopen(inFile, "r");
+
 }
 
 /////////////   P6 To P6  ///////////////////////////////
 void ppmP6ToP6(struct PPM ppm, FILE* inFile, FILE* outFile) {
-    //Takes a given output file and creates the PPM header
+   //Takes a given output file and creates the PPM header
    writeHeader( outFile, 6, ppm.width, ppm.height, ppm.maxColVal);
    //TODO: write file
    //Image stored as binary encoding AKA Portable Pixmap rawbits format
    //Open the file given as read so we do not change the data
-   FILE *inputFile = fopen(inFile, "r");
+
 }
 
 
@@ -152,7 +151,7 @@ struct PPM readHeader(FILE* file) {
      // scan file for header info
      while (!endHeader && curChar != EOF) {
         curChar = fgetc(file);
-
+        
         // current char is the end of a comment
         if (curChar == '\n' && isComment) {
            isComment = false;
@@ -172,19 +171,21 @@ struct PPM readHeader(FILE* file) {
                append(curStr, curChar); //add char to curStr
            }
            // end of current string
-           else if (ppm->width == INVALID_INT) {
-               ppm->width = atoi(curStr);
+           else if (curStr[0] != '\0') {
+               if (ppm->width == INVALID_INT) {
+                   ppm->width = atoi(curStr);
+               }
+	       // current string is the height
+	       else if (ppm->height == INVALID_INT) {
+	           ppm->height = atoi(curStr);
+	           clearStr(curStr);
+	       }
+               // current string is the maximum color value
+               else {
+                   ppm->maxColVal = atoi(curStr);
+                   endHeader = true;
+               }
                clearStr(curStr);
-           }
-	   // current string is the height
-	   else if (ppm->height == INVALID_INT) {
-	       ppm->height = atoi(curStr);
-	       clearStr(curStr);
-	   }
-           // current string is the maximum color value
-           else {
-               ppm->maxColVal = atoi(curStr);
-               endHeader = true;
            }
         }
      } // end while loop for header
@@ -195,7 +196,7 @@ struct PPM readHeader(FILE* file) {
         fail("incorrect header form, missing a value or endspace", PPM_HDR_ERR, file);
      }
      // invalid information in header
-     else if (ppm->height <= 0 || ppm->width <= 0 || ppm->maxColVal < 0 ) {
+     else if (ppm->height < 0 || ppm->width < 0 || ppm->maxColVal < 0 || ppm->maxColVal > MAX_COLOR) {
         free(ppm);
         fail("a value in the header file in not a valid positive integer", PPM_HDR_ERR, file);
      }
@@ -207,10 +208,7 @@ struct PPM readHeader(FILE* file) {
 void writeHeader(FILE* file, int form, int width, int height, int maxCol) {
     char hdr[MAX_STR_LEN];
     //places Magic number and dimensions in header
-    sprintf(hdr, "P%d%c%d%c%d%c%d%c\n",  form, WRITE_SPACE,
-                                        width, WRITE_SPACE,
-                                       height, WRITE_SPACE,
-                                       maxCol, WRITE_SPACE);
+    sprintf(hdr, "P%d\n%d %d\n%d\n",  form, width, height, maxCol);
     fputs(hdr, file);
 }
 
