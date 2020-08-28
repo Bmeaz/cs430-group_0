@@ -171,16 +171,27 @@ struct PPM readFile(char* filename) {
     else if (ppm->form == 6) {
        // TODO: Fix this method
         int imageSize = ppm->width * ppm->height;
-        size_t size = fread(ppm->pixData, sizeof(Pixel), imageSize * 3, file);   //saves p6 data (added *3 for the 3 bytes)
-        printf("%d %d %d", pixData->red, pixData->green, pixData->blue); // Testing these values
-        fclose(file); // Closing for testing sake
+
+        size_t size = fread(ppm->pixData, sizeof(struct Pixel)/4, imageSize, file);   //saves p6 data
+
         if(size < imageSize) {
             fail("Error: Can't convert!", PPM_DATA_ERR, file);
         }
-        // Increment the file ptr
-        file++;
-        // Copy the data from file 0 to
-        memcpy(file->pixData[0], file, size);
+        int location = 0;
+
+        int rgbVals = 0;
+        for(int col = 0; col < ppm->height; col++){
+          for(int row = 0; row < ppm->width; row++){
+            location = fread(ppm->pixData,sizeof(struct Pixel), imageSize, file);
+
+            Pixel *pixel = (Pixel*)malloc(sizeof(struct Pixel));
+            // TODO ADD A CONDITIONAL HERE FOR LESS DATA THAN EXPECTED
+            ppm->pixData[location] = pixel->red;
+            ppm->pixData[location + 1] = pixel->green;
+            ppm->pixData[location + 2] = pixel->blue;
+
+          }
+        }
 
     }
     // fail if more data found after image is read
@@ -207,18 +218,28 @@ void writeP3(struct PPM ppm, char* outFile) {
         }
         fprintf(file, "\n");
     }
+    printf("I wrote a P3\n");
 }
 
 /////////////  write P6  ///////////////////////////////
 void writeP6(struct PPM ppm, char* outFile) {
+
     FILE *file = fopen(outFile, "wb");
+
     fprintf(file, "P6\n%d %d\n%d\n", ppm.width, ppm.height, ppm.maxColVal);
-    for(int col = 0; col < ppm.height; col++){
-        for(int row = 0; row < ppm.width; row ++){
-            int location = col * pp
+
+    for(int col = 0; col < ppm.height; col++) {
+       for(int row = 0; row < ppm.width; row++) {
+
+
+           int location = col * ppm.width * 3 + row * 3;
+
+
+           fwrite(ppm.pixData, sizeof(struct Pixel), ppm.width * ppm.height, file);
+
         }
     }
-    fwrite(ppm.pixData, sizeof(Pixel), ppm.width * ppm.height, file);
+    printf("I wrote a P6\n");
 }
 
 /////////////   MAIN  ///////////////////////////////
