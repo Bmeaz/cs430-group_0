@@ -86,7 +86,7 @@ struct PPM readFile(char* filename) {
      char curStr[MAX_STR_LEN], curChar = ' ';
      bool isComment = false, endHeader = false;
      char firstChar = fgetc(file);
-     
+
      struct PPM *ppm = malloc(sizeof(PPM));
      ppm->form = fgetc(file)-'0';
      ppm->height = INVALID_INT;
@@ -101,19 +101,17 @@ struct PPM readFile(char* filename) {
      // scan file for header info
      while (!endHeader && curChar != EOF) {
         curChar = fgetc(file);
-        
+
         // current char is the end of a comment
         if (curChar == '\n' && isComment) {
            isComment = false;
            clearStr(curStr);
         }
-        // current character is not a space or we are within comment
         else if (!isComment) {
 	   isComment = atComChar(curChar);
 
 	   // current char is not endspace - append char to sting if an integer
            if (!charInStr(SPACE_CHAR, curChar)) {
-               // current char is not an integer or a endspace - fail
                if (!isdigit(curChar)) {
                     free(ppm);
                     fail("invalid character found in header", PPM_HDR_ERR, file);
@@ -125,40 +123,36 @@ struct PPM readFile(char* filename) {
                if (ppm->width == INVALID_INT) {
                    ppm->width = atoi(curStr);
                }
-	       // current string is the height
 	       else if (ppm->height == INVALID_INT) {
 	           ppm->height = atoi(curStr);
 	           clearStr(curStr);
 	       }
-               // current string is the maximum color value
                else {
                    ppm->maxColVal = atoi(curStr);
                    endHeader = true;
                }
                clearStr(curStr);
-           }
+            }
         }
     } // end while loop for header
 
     // Not enough information in header
-    if (!endHeader || ppm->height < 0 || ppm->width < 0 || 
+    if (!endHeader || ppm->height < 0 || ppm->width < 0 ||
         ppm->maxColVal < 0 || ppm->maxColVal > MAX_COLOR) {
         free(ppm);
         fail("Invalid header, ensure that the header does not have invalid characters", PPM_HDR_ERR, file);
     }
-  
+
     ppm->pixData = (unsigned char*)malloc((ppm->width) * (ppm->height) * (sizeof(Pixel)));    //allocates memory for the buffer data
 
     // read image data for P3 image file
-
-    if (ppm->form == 3) { 
+    if (ppm->form == 3) {
         for(int col = 0; col < ppm->height; col++) {
             for(int row = 0; row < ppm->width; row++) {
                 int location = col * ppm->width * 3 + row * 3;
-                
                 Pixel *pixel = (Pixel*)malloc(sizeof(Pixel));
-                
-                if (fscanf(file, "%d %d %d ", &pixel->red, &pixel->green, &pixel->blue) == EOF) {
+
+                if (fscanf(file, "%hhd %hhd %hhd ", &pixel->red, &pixel->green, &pixel->blue) == EOF) {
                     fail("Input file has less data than expected", PPM_DATA_ERR, file);
                 }
                 ppm->pixData[location] = pixel->red;
@@ -169,15 +163,27 @@ struct PPM readFile(char* filename) {
     }
     // read image data for P6 image file
     else if (ppm->form == 6) {
-       // TODO: Fix this method
         int imageSize = ppm->width * ppm->height;
-        size_t size = fread(ppm->pixData, sizeof(Pixel), imageSize, file);   //saves p6 data 
+        size_t size = fread(ppm->pixData, sizeof(struct Pixel)/4, imageSize, file);   //saves p6 data
+
         if(size < imageSize) {
-            fail("Error: Can't convert!", PPM_DATA_ERR, file);
+            fail("Input file has less data than expected", PPM_DATA_ERR, file);
         }
+
+        for(int col = 0; col < ppm->height; col++){
+            for(int row = 0; row < ppm->width; row++){
+                int location = fread(ppm->pixData,sizeof(struct Pixel), imageSize, file);
+
+                Pixel *pixel = (Pixel*)malloc(sizeof(struct Pixel));
+                ppm->pixData[location] = pixel->red;
+                ppm->pixData[location + 1] = pixel->green;
+                ppm->pixData[location + 2] = pixel->blue;
+            }
+        }
+
     }
     // fail if more data found after image is read
-    while (curChar != EOF) {  
+    while (curChar != EOF) {
         if (!charInStr(SPACE_CHAR, curChar)) {
             free(ppm);
             fail("Input file has more data than expected", PPM_DATA_ERR, file);
@@ -194,19 +200,23 @@ void writeP3(struct PPM ppm, char* outFile) {
     for(int col = 0; col < ppm.height; col++) {
        for(int row = 0; row < ppm.width; row++) {
            int location = col * ppm.width * 3 + row * 3;
-           fprintf(file, "%d %d %d\n", ppm.pixData[location], 
-                                       ppm.pixData[location + 1], 
+           fprintf(file, "%d %d %d\n", ppm.pixData[location],
+                                       ppm.pixData[location + 1],
                                        ppm.pixData[location + 2]);
         }
         fprintf(file, "\n");
     }
+    fclose(file);
 }
 
 /////////////  write P6  ///////////////////////////////
 void writeP6(struct PPM ppm, char* outFile) {
-    FILE *file = fopen(outFile, "w");
+    FILE *file = fopen(outFile, "wb");
     fprintf(file, "P6\n%d %d\n%d\n", ppm.width, ppm.height, ppm.maxColVal);
-    fwrite(ppm.pixData, sizeof(Pixel), ppm.width * ppm.height, file);
+
+    fwrite(ppm.pixData, sizeof(struct Pixel), ppm.width * ppm.height, file);
+
+    fclose(file);
 }
 
 /////////////   MAIN  ///////////////////////////////
@@ -220,7 +230,7 @@ int main (int argc, char *argv[]) {
     char *input = argv[2];
     char *output = argv[3];
 
-    // argument given is invalid
+    // First argument given is invalid
     if (!isValidForm(outForm)) {
         fail( "Incorrect form value, This program can only use: P3 and P6", IN_ERR_CODE, NULL);
     }
@@ -236,14 +246,12 @@ int main (int argc, char *argv[]) {
     else if(!isFileType(output, ".ppm")) {
         fail("output file is not of type .ppm", IN_ERR_CODE, NULL);
     }
-    
+
     struct PPM ppm = readFile(input);
 
-    // read file if ppm 3 form
     if (outForm == 3) {
         writeP3(ppm, output);
     }
-    // read file if ppm 6 form
     else if (outForm == 6) {
         writeP6(ppm, output);
     }
@@ -251,3 +259,4 @@ int main (int argc, char *argv[]) {
     printf("\n\tConversion Successful\n\n");
     return VALID_CODE;
 }
+

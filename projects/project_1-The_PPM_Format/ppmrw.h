@@ -32,9 +32,9 @@ typedef struct PPM {
 
 // structure for a single Pixel
 typedef struct Pixel {
-    unsigned int red;
-    unsigned int green;
-    unsigned int blue;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
 } Pixel;
 
 /////////////////////////////////   append  ///////////////////////////////
