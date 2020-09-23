@@ -2,10 +2,10 @@ CC=gcc
 CFLAGS=-Wall
 RM=rm -f
 
-all: 3dmath
+all: v3math
 
-3dmath: 3dmath.c
-        $(CC) $(CFLAGS) 3dmath.c -o 3dmath
+v3math: v3math.c
+	$(CC) $(CFLAGS) v3math.c -o v3math -lm
 
 clean:
-        $(RM) 3dmath *~
+	$(RM) v3math *~
