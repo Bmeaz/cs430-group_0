@@ -35,7 +35,14 @@ void v3_scale(float *dst, float s) {
 }
 
 
-void v3_angle(float *dst, float *a, float *b) {
+void v3_angle(float *a, float *b) {
+    float A[] = {0.0, 0.0, 0.0};
+    float B[] = {0.0, 0.0, 0.0};
+
+    v3_normalize(A, a);
+    v3_normalize(B, b);
+
+    return v3_dot_product(A, B);
 }
 
 
@@ -44,6 +51,13 @@ void v3_angle_quick(float *dst, float *a, float *b) {
 }
 
 void v3_reflect(float *dst, float *v, float *n) {
+    float N[] = {0.0, 0.0, 0.0};
+    float dotProd = v3_dot_product(v, N);
+
+    v3_normalize(N, n);
+
+    v3_scale(N, 2*dotProd);
+    v3_subtract(dst, v, N);
 
 }
 
@@ -52,6 +66,12 @@ float v3_length(float *a){
 }
 
 void v3_normalize(float *dst, float *a) {
+    float len = v3_length(a);
+    dst[0] = a[0];
+    dst[1] = a[1];
+    dst[2] = a[2];
+
+    v3_scale(dst, (1/length));
 
 }
 
