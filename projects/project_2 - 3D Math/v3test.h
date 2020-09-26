@@ -9,6 +9,8 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "v3math.c"
+
 void v3_from_points_test (float *dst, float *a, float *b);
 
 void v3_add_test (float *dst, float *a, float *b);
