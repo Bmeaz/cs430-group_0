@@ -21,9 +21,9 @@ void v3_cross_product (float *dst, float *a, float *b);
 
 void v3_scale (float *dst, float s);
 
-void v3_angle (float *dst, float *a, float *b);
+void v3_angle (float *a, float *b);
 
-void v3_angle_quick (float *dst, float *a, float *b);
+void v3_angle_quick (float *a, float *b);
 
 void v3_reflect (float *dst, float *v, float *n);
 
