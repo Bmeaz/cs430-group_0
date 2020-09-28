@@ -72,11 +72,31 @@ void v3_scale_test (float s){
 }
 
 void v3_angle_test (float *a, float *b){
+    v3_angle(testArrayA, testArrayB);
 
+    if(A[0] == 0 || A[1] == 0 || A[2] ==0 ||
+       B[0] == 0 || B[1] == 0 || B[2] ==0 || ){
+           printf("Angle Test Failed: 0 value found in array");
+           exit(1);
+       }
+    printf("Angle Test Passed");
 }
 
 void v3_angle_quick_test (float *a, float *b){
+    v3_angle_quick(testArrayA, testArrayB);
 
+    //Checks to see if any values were not changed from 0
+    if(A[0] == 0 || A[1] == 0 || A[2] ==0 ||
+       B[0] == 0 || B[1] == 0 || B[2] ==0 || ){
+           printf("Angle Test Failed: 0 value found in array");
+           exit(1);
+    }
+    //Checks to see if there are duplicate values for each pair of indices
+    if(A[0] == B[0] || A[1] == B[1] || A[2] == B[2]){
+           printf("Angle Test Failed: 0 value found in array");
+           exit(1);
+    }
+    printf("Angle Quick Test Passed");
 }
 
 void v3_reflect_test (float *dst, float *v, float *n){
