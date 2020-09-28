@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <assert.h>
 
 void v3_from_points (float *dst, float *a, float *b);
 
@@ -21,9 +22,9 @@ void v3_cross_product (float *dst, float *a, float *b);
 
 void v3_scale (float *dst, float s);
 
-void v3_angle (float *a, float *b);
+float v3_angle (float *a, float *b);
 
-void v3_angle_quick (float *a, float *b);
+float v3_angle_quick (float *a, float *b);
 
 void v3_reflect (float *dst, float *v, float *n);
 
@@ -33,6 +34,7 @@ void v3_normalize(float *dst, float *a);
 
 bool v3_equals (float *a, float *b, float tolerance);
 
-int main (int argc, char *argv[]);
+
+
 
 #endif

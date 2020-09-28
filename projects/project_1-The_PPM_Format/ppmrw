@@ -89,6 +89,8 @@ struct PPM readFile(char* filename) {
 
      struct PPM *ppm = malloc(sizeof(PPM));
      ppm->form = fgetc(file)-'0';
+     ppm->height = INVALID_INT;
+     ppm->width = INVALID_INT;
 
      // first two char are not P and form or third char is not an end character
      if (firstChar != 'P' || !isValidForm(ppm->form)) {
@@ -257,4 +259,5 @@ int main (int argc, char *argv[]) {
     printf("\n\tConversion Successful\n\n");
     return VALID_CODE;
 }
+
 
