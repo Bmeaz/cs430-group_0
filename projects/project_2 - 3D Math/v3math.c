@@ -59,15 +59,11 @@ void v3_reflect(float *dst, float *v, float *n) {
 
     for(int refIndex = 0; refIndex < 3; refIndex++){
         // Compute b at the start of the loop
-        float b = -(N[refIndex])*(v[refIndex]) * (N[refIndex]);
+        float b = -(n[refIndex])*(v[refIndex]) * (n[refIndex]);
         //Compute Vr by using previously calculated b
         dst[refIndex] = v[refIndex] + 2*b;
     }
 
-    //v3_normalize(N, n);
-
-    //v3_scale(N, 2*dotProd);
-    //v3_subtract(dst, v, N);
 
 }
 
@@ -84,7 +80,7 @@ void v3_normalize(float *dst, float *a) {
 }
 
 bool v3_equals(float *a, float *b, float tolerance) {
-    
+
     if(fabs(a[0] - b[0]) > tolerance ||
        fabs(a[1] - b[1]) > tolerance  ||
        fabs(a[2] - b[2]) > tolerance) {
@@ -92,4 +88,3 @@ bool v3_equals(float *a, float *b, float tolerance) {
     }
     return true;
 }
-

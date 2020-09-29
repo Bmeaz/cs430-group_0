@@ -16,7 +16,7 @@
 float a_vals[2][3] = { {1.25, 0.80, -3.2},
                        {.005, -0.1, 0.00} };
 //all values for b
-float b_vals[2][3] = { {2.890, 0.00, -0.01}, 
+float b_vals[2][3] = { {2.890, 0.00, -0.01},
                        {-9.00, 19.0, 4.000} };
 
 //values for scales
@@ -63,10 +63,10 @@ float qangle_test[4] = {0.3575062899839984, -0.117223484322137562, 0.04993731799
 
 //v3 reflect product answers
 //TODO: add correct reflect values
-float reflect_test[4][3] = { {1.0, 0.0, 0.0},
-                             {1.0, 0.0, 0.0},
-                             {1.0, 0.0, 0.0},
-                             {1.0, 0.0, 0.0} };
+float reflect_test[4][3] = { {-19.630251, 0.800000, -3.199360},
+                             {-201.250000, -576.799988, 99.200005},
+                             {-0.078521, -0.100000, 0.000000},
+                             {-0.805000, 72.099998, 0.000000} };
 
 //v3 normalize answers
 float norm_test[4][3] = { {0.354369, 0.226796, -0.907186},
@@ -93,7 +93,7 @@ void print_pass (int fails, char* msg) {
        printf("\n%d Test(s) Failed For: %s\n", fails, msg);
     }
 }
-  
+
 
 void set_vector (float *dst, float *val) {
     dst[0] = val[0];
@@ -115,7 +115,7 @@ void void_test(int type, char* method) {
             curNum = x + y + loops;
             switch(type) {
 
-               case POINT:        
+               case POINT:
                   set_vector(act_vec, point_test[curNum]);
                   v3_from_points(pred_vec, a, b);
                   break;
@@ -127,10 +127,10 @@ void void_test(int type, char* method) {
 
                case SUB:
                    set_vector(act_vec, sub_test[curNum]);
-                   v3_subtract(pred_vec, a, b); 
+                   v3_subtract(pred_vec, a, b);
                    break;
 
-               case DOT:        
+               case DOT:
                    act_float = dot_test[curNum];
                    pred_float = v3_dot_product(a, b);
                    break;
@@ -151,13 +151,13 @@ void void_test(int type, char* method) {
                    v3_scale(pred_vec, scale_vals[curNum]);
                    break;
 
-               case ANGLE:        
+               case ANGLE:
                    act_float = angle_test[curNum];
                    pred_float = v3_angle(a, b);
 
                    break;
 
-               case QANGLE:        
+               case QANGLE:
                    act_float = qangle_test[curNum];
                    pred_float = v3_angle_quick(a, b);
                    break;
@@ -190,21 +190,21 @@ void void_test(int type, char* method) {
                    }
                    act_float = length_test[curNum];
                    break;
-            }  
+            }
             if (!is_empty(pred_vec) && !is_empty(act_vec) && !v3_equals(act_vec, pred_vec, 0.001)) {
                     fails ++;
                     fprintf(stdout, "\n\tTest Failed: %s, test #%d\n", method, curNum+1);
-                    fprintf(stdout, "\t\tActual: %f, %f, %f\n",act_vec[0], act_vec[1], act_vec[2]); 
-                    fprintf(stdout, "\t\tPredicted: %f, %f, %f\n",pred_vec[0], pred_vec[1], pred_vec[2]); 
-            }  
+                    fprintf(stdout, "\t\tActual: %f, %f, %f\n",act_vec[0], act_vec[1], act_vec[2]);
+                    fprintf(stdout, "\t\tPredicted: %f, %f, %f\n",pred_vec[0], pred_vec[1], pred_vec[2]);
+            }
             else if (fabs(act_float-pred_float) > 0.001) {
                 fails ++;
                 fprintf(stdout, "\n\tTest Failed: %s, test #%d\n", method, curNum+1);
-                fprintf(stdout, "\t\tActual: %f\n",act_float); 
-                fprintf(stdout, "\t\tPredicted: %f\n",pred_float); 
+                fprintf(stdout, "\t\tActual: %f\n",act_float);
+                fprintf(stdout, "\t\tPredicted: %f\n",pred_float);
             }
-        } 
-        loops ++; 
+        }
+        loops ++;
     }
     print_pass(fails, method);
 }
@@ -225,4 +225,3 @@ int main(int argc, char *argv[]) {
     void_test(LEN,"v3_length");
     return 0;
 }
-
