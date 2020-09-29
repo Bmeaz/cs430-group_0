@@ -19,10 +19,11 @@ float a_vals[2][3] = { {1.25, 0.80, -3.2},
 float b_vals[2][3] = { {2.890, 0.00, -0.01}, 
                        {-9.00, 19.0, 4.000} };
 
-float scale_vals[4] = {0.0, 4.5, 0000.7, -2.008};
+//values for scales
+float scale_vals[4] = {0.0, 4.5, 0.0007, -2.008};
 
 //v3 from points answers
-//TODO
+//TODO: add correct point test values
 float point_test[4][3] = { {0.0, 0.0, 0.0},
                            {0.0, 0.0, 0.0},
                            {0.0, 0.0, 0.0},
@@ -50,22 +51,19 @@ float cross_test[4][3] = { {-0.008, -9.2355, -2.312},
                            {-0.4, -0.02, -0.805} };
 
 //v3 scale product answers
-//TODO
-float scale_test[4][3] = { {0.0, 0.0, 0.0},
-                           {0.0, 0.0, 0.0},
-                           {0.0, 0.0, 0.0},
-                           {0.0, 0.0, 0.0} };
+//TODO: add correct scale values
+float scale_test[4][3] = { {1.0, 0.0, 0.0},
+                           {1.0, 0.0, 0.0},
+                           {1.0, 0.0, 0.0},
+                           {1.0, 0.0, 0.0} };
 
 //v3 angle answers
-//TODO
-float angle_test[4] = {0.0, 0.0, 0.0, 0.0};
+float angle_test[4] = {1.20519998, 1.68828995, 1.52083823, 2.70857798};
 
 //v3 angle quick answers
-//TODO
-float qangle_test[4] = {0.0, 0.0, 0.0, 0.0};
+float qangle_test[4] = {0.3575062899839984, -0.117223484322137562, 0.049937317994116014, -0.9077048919330981};
 
 //v3 reflect product answers
-//TODO
 float reflect_test[4][3] = { {0.0, 0.0, 0.0},
                              {0.0, 0.0, 0.0},
                              {0.0, 0.0, 0.0},
@@ -156,12 +154,13 @@ void void_test(int type, char* method) {
                    break;
 
                case ANGLE:        
-                   act_float = angle_test[x];
+                   act_float = angle_test[curNum];
                    pred_float = v3_angle(a, b);
+
                    break;
 
                case QANGLE:        
-                   act_float = qangle_test[x];
+                   act_float = qangle_test[curNum];
                    pred_float = v3_angle_quick(a, b);
                    break;
 
@@ -223,9 +222,9 @@ int main(int argc, char *argv[]) {
     void_test(DOT,"v3_dot_product");
     void_test(CROSS,"v3_cross_product");
     void_test(SCALE,"v3_scale");
-    //void_test(ANGLE,"v3_angle");
-    //void_test(QANGLE,"v3_angle_quick");
-    //void_test(REFLCT,"v3_reflect");
+    void_test(ANGLE,"v3_angle");
+    void_test(QANGLE,"v3_angle_quick");
+    void_test(REFLCT,"v3_reflect");
     void_test(NORM,"v3_normalize");
     void_test(LEN,"v3_length");
     return 0;

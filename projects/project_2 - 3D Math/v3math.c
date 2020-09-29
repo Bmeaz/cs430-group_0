@@ -41,10 +41,11 @@ float v3_angle(float *a, float *b){
 
 // angle between a and b; no cos-1
 float v3_angle_quick(float *a, float *b){
-    float a_unit, b_unit;
-    v3_normalize(&a_unit, a);
-    v3_normalize(&b_unit, b);
-    return v3_dot_product(&a_unit, &b_unit);
+    float a_unit[3] = {0.0, 0.0, 0.0};
+    float b_unit[3] = {0.0, 0.0, 0.0};
+    v3_normalize(a_unit, a);
+    v3_normalize(b_unit, b);
+    return v3_dot_product(a_unit, b_unit);
 }
 
 
