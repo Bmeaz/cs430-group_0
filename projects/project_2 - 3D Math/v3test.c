@@ -62,7 +62,7 @@ float angle_test[4] = {1.20519998, 1.68828995, 1.52083823, 2.70857798};
 float qangle_test[4] = {0.3575062899839984, -0.117223484322137562, 0.049937317994116014, -0.9077048919330981};
 
 //v3 reflect product answers
-//TODO: add correct scale values
+//TODO: add correct reflect values
 float reflect_test[4][3] = { {1.0, 0.0, 0.0},
                              {1.0, 0.0, 0.0},
                              {1.0, 0.0, 0.0},
@@ -87,10 +87,10 @@ bool is_empty( float *arr) {
 
 void print_pass (int fails, char* msg) {
     if(fails == 0) {
-       printf("\nAll Tests Passed For: %s\n\n", msg);
+       printf("\nAll Tests Passed For: %s\n", msg);
     }
     else {
-       printf("\n%d Test(s) Failed For: %s\n\n", fails, msg);
+       printf("\n%d Test(s) Failed For: %s\n", fails, msg);
     }
 }
   
@@ -191,19 +191,17 @@ void void_test(int type, char* method) {
                    act_float = length_test[curNum];
                    break;
             }  
-            if (!is_empty(pred_vec) && !is_empty(act_vec)) {
-                if (!v3_equals(act_vec, pred_vec, 0.001)) {
+            if (!is_empty(pred_vec) && !is_empty(act_vec) && !v3_equals(act_vec, pred_vec, 0.001)) {
                     fails ++;
-                    fprintf(stdout, "\tTest Failed: %s, test #%d\n", method, curNum+1);
+                    fprintf(stdout, "\n\tTest Failed: %s, test #%d\n", method, curNum+1);
                     fprintf(stdout, "\t\tActual: %f, %f, %f\n",act_vec[0], act_vec[1], act_vec[2]); 
-                    fprintf(stdout, "\t\tPredicted: %f, %f, %f\n\n",pred_vec[0], pred_vec[1], pred_vec[2]); 
-                }
+                    fprintf(stdout, "\t\tPredicted: %f, %f, %f\n",pred_vec[0], pred_vec[1], pred_vec[2]); 
             }  
             else if (fabs(act_float-pred_float) > 0.001) {
                 fails ++;
-                fprintf(stdout, "\tTest Failed: %s, test #%d\n", method, curNum+1);
+                fprintf(stdout, "\n\tTest Failed: %s, test #%d\n", method, curNum+1);
                 fprintf(stdout, "\t\tActual: %f\n",act_float); 
-                fprintf(stdout, "\t\tPredicted: %f\n\n",pred_float); 
+                fprintf(stdout, "\t\tPredicted: %f\n",pred_float); 
             }
         } 
         loops ++; 
