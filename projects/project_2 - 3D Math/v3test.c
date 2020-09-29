@@ -23,10 +23,10 @@ float scale_vals[4] = {0.0, 4.5, 0000.7, -2.008};
 
 //v3 from points answers
 //TODO
-float point_test[4][3] = { {},
-                           {},
-                           {},
-                           {} };
+float point_test[4][3] = { {0.0, 0.0, 0.0},
+                           {0.0, 0.0, 0.0},
+                           {0.0, 0.0, 0.0},
+                           {0.0, 0.0, 0.0} };
 
 //v3 add answers
 float add_test[4][3] = { {4.14, 0.8, -3.21},
@@ -44,18 +44,17 @@ float sub_test[4][3] = { {-1.64, 0.8, -3.19},
 float dot_test[4] = {3.6445, -8.85, 0.01445, -1.945};
 
 //v3 cross product answers
-//TODO
-float cross_test[4][3] = { {},
-                           {},
-                           {},
-                           {} };
+float cross_test[4][3] = { {-0.008, -9.2355, -2.312},
+                           {64.0, 23.8, 30.95},
+                           {0.001, 0.00005, 0.289},
+                           {-0.4, -0.02, -0.805} };
 
 //v3 scale product answers
 //TODO
-float scale_test[4][3] = { {},
-                           {},
-                           {},
-                           {} };
+float scale_test[4][3] = { {0.0, 0.0, 0.0},
+                           {0.0, 0.0, 0.0},
+                           {0.0, 0.0, 0.0},
+                           {0.0, 0.0, 0.0} };
 
 //v3 angle answers
 //TODO
@@ -67,19 +66,19 @@ float qangle_test[4] = {0.0, 0.0, 0.0, 0.0};
 
 //v3 reflect product answers
 //TODO
-float reflect_test[4][3] = { {4.14, 0.8, -3.21},
-                             {-7.75, 19.8, 0.8},
-                             {2.895, -0.1, -0.01},
-                             {-8.995, 18.9, 4} };
+float reflect_test[4][3] = { {0.0, 0.0, 0.0},
+                             {0.0, 0.0, 0.0},
+                             {0.0, 0.0, 0.0},
+                             {0.0, 0.0, 0.0} };
 
 //v3 normalize answers
-float norm_test[4][3] = { {0.78122, 0.15096, -0.605728},
-                          {-0.364423, 0.93055, 0.037598},
-                          {0.999398, -0.03452115, -0.003445215},
-                          {-0.44221, 0.886904, 0.187704} };
+float norm_test[4][3] = { {0.354369, 0.226796, -0.907186},
+                          {0.0499376, -0.998752, 0.0},
+                          {0.999994, 0.0, -0.00346019},
+                          {-0.420542, 0.887812, 0.186908} };
 
 //v3 length answers
-float length_test[4] = {5.29914, 21.277, 2.89674, 21.3101};
+float length_test[4] = {3.52739, 0.100125, 2.89002, 21.4009};
 
 
 
@@ -136,12 +135,12 @@ void void_test(int type, char* method) {
                    break;
 
                case DOT:        
-                   act_float = dot_test[curNum-x];
+                   act_float = dot_test[curNum];
                    pred_float = v3_dot_product(a, b);
                    break;
 
                case CROSS:
-                   set_vector(act_vec, cross_test[curNum-x]);
+                   set_vector(act_vec, cross_test[curNum]);
                    v3_cross_product(pred_vec, a, b);
                    break;
 
@@ -172,30 +171,38 @@ void void_test(int type, char* method) {
                    break;
 
               case NORM:
-                   set_vector(act_vec, norm_test[x]);
-                   v3_normalize(pred_vec, a);
+                   set_vector(act_vec, norm_test[curNum]);
+                   if(loops == 0) {
+                       float a[3] = {a_vals[y][0], a_vals[y][1], a_vals[y][2]};
+                       v3_normalize(pred_vec, a);
+                   }
+                   else {
+                       float b[3] = {b_vals[y][0], b_vals[y][1], b_vals[y][2]};
+                       v3_normalize(pred_vec, b);
+                   }
                    break;
 
               case LEN:
                    if(loops == 0) {
-                       act_float = length_test[curNum];
+                       float a[3] = {a_vals[y][0], a_vals[y][1], a_vals[y][2]};
                        pred_float = v3_length(a);
                    }
                    else {
-                       act_float = length_test[curNum];
+                       float b[3] = {b_vals[y][0], b_vals[y][1], b_vals[y][2]};
                        pred_float = v3_length(b);
                    }
+                   act_float = length_test[curNum];
                    break;
             }  
             if (!is_empty(pred_vec) && !is_empty(act_vec)) {
-                if (!v3_equals(act_vec, pred_vec, 0.0001)) {
+                if (!v3_equals(act_vec, pred_vec, 0.001)) {
                     fails ++;
                     fprintf(stdout, "\tTest Failed: %s, test #%d\n", method, curNum+1);
                     fprintf(stdout, "\t\tActual: %f, %f, %f\n",act_vec[0], act_vec[1], act_vec[2]); 
                     fprintf(stdout, "\t\tPredicted: %f, %f, %f\n\n",pred_vec[0], pred_vec[1], pred_vec[2]); 
                 }
             }  
-            else if (fabs(act_float-pred_float) > 0.0001) {
+            else if (fabs(act_float-pred_float) > 0.001) {
                 fails ++;
                 fprintf(stdout, "\tTest Failed: %s, test #%d\n", method, curNum+1);
                 fprintf(stdout, "\t\tActual: %f\n",act_float); 
@@ -210,11 +217,11 @@ void void_test(int type, char* method) {
 
 int main(int argc, char *argv[]) {
 
-     //void_test(POINT,"v3_from_points");
+    //void_test(POINT,"v3_from_points");
     void_test(ADD,"v3_add");
     void_test(SUB,"v3_subtract");
     void_test(DOT,"v3_dot_product");
-    //void_test(CROSS,"v3_cross_product");
+    void_test(CROSS,"v3_cross_product");
     void_test(SCALE,"v3_scale");
     //void_test(ANGLE,"v3_angle");
     //void_test(QANGLE,"v3_angle_quick");
