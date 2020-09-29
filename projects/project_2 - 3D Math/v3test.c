@@ -20,14 +20,13 @@ float b_vals[2][3] = { {2.890, 0.00, -0.01},
                        {-9.00, 19.0, 4.000} };
 
 //values for scales
-float scale_vals[4] = {0.0, 4.5, 0.0007, -2.008};
+float scale_vals[4] = {-0.1, 4.5, 0.0007, -2.008};
 
 //v3 from points answers
-//TODO: add correct point test values
-float point_test[4][3] = { {0.0, 0.0, 0.0},
-                           {0.0, 0.0, 0.0},
-                           {0.0, 0.0, 0.0},
-                           {0.0, 0.0, 0.0} };
+float point_test[4][3] = { {1.64, -0.8, 3.19},
+                           {-10.25, 18.2, 7.2},
+                           {2.885, 0.1, -0.01},
+                           {-9.005, 19.1, 4.0} };
 
 //v3 add answers
 float add_test[4][3] = { {4.14, 0.8, -3.21},
@@ -51,11 +50,10 @@ float cross_test[4][3] = { {-0.008, -9.2355, -2.312},
                            {-0.4, -0.02, -0.805} };
 
 //v3 scale product answers
-//TODO: add correct scale values
-float scale_test[4][3] = { {1.0, 0.0, 0.0},
-                           {1.0, 0.0, 0.0},
-                           {1.0, 0.0, 0.0},
-                           {1.0, 0.0, 0.0} };
+float scale_test[4][3] = { {-0.125, -0.08, .320},
+                           {0.0225, -0.45, 0.0},
+                           {0.002023, 0.0, -0.000007},
+                           {18.071999, -38.151997, -8.032} };
 
 //v3 angle answers
 float angle_test[4] = {1.20519998, 1.68828995, 1.52083823, 2.70857798};
@@ -64,10 +62,11 @@ float angle_test[4] = {1.20519998, 1.68828995, 1.52083823, 2.70857798};
 float qangle_test[4] = {0.3575062899839984, -0.117223484322137562, 0.049937317994116014, -0.9077048919330981};
 
 //v3 reflect product answers
-float reflect_test[4][3] = { {0.0, 0.0, 0.0},
-                             {0.0, 0.0, 0.0},
-                             {0.0, 0.0, 0.0},
-                             {0.0, 0.0, 0.0} };
+//TODO: add correct scale values
+float reflect_test[4][3] = { {1.0, 0.0, 0.0},
+                             {1.0, 0.0, 0.0},
+                             {1.0, 0.0, 0.0},
+                             {1.0, 0.0, 0.0} };
 
 //v3 normalize answers
 float norm_test[4][3] = { {0.354369, 0.226796, -0.907186},
@@ -108,7 +107,6 @@ void void_test(int type, char* method) {
     float pred_vec[3] = {0.0, 0.0, 0.0};
     float act_float = 0.0, pred_float = 0.0;
     int fails = 0, loops = 0, curNum;
-
     for (int x = 0; x < VAL_NUMS; x++) {
         float a[3] = {a_vals[x][0], a_vals[x][1], a_vals[x][2]};
 
@@ -216,7 +214,7 @@ void void_test(int type, char* method) {
 
 int main(int argc, char *argv[]) {
 
-    //void_test(POINT,"v3_from_points");
+    void_test(POINT,"v3_from_points");
     void_test(ADD,"v3_add");
     void_test(SUB,"v3_subtract");
     void_test(DOT,"v3_dot_product");
