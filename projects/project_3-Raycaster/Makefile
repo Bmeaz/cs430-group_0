@@ -1,0 +1,11 @@
+CC=gcc
+CFLAGS=-Wall
+RM=rm -f
+
+all: raycast
+
+raycast: raycast.c
+	$(CC) $(CFLAGS) raycast  raycast.c ppmrw.c -lm
+	
+clean:
+	$(RM) raycast *~ *.o
