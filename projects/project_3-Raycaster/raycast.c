@@ -39,6 +39,18 @@ void readLine(char* filename) {
      fclose(file);      
 }
 
+///////////// SHOOT /////////////////////////////////
+// I believe this is a function we need according to section 4.1 of House's Raycasting
+//shoot() is a function that “shoots” the ray out into the scene,
+//and returns the position of the first intersection of the ray with an object in the
+//scene
+
+///////////// SHADE /////////////////////////////////
+// I believe this is a function we need according to section 4.1 of House's Raycasting
+//shade() function determines what color to assign the current pixel,
+//based on the position of the “hit” returned by shoot()
+
+
 /////////////   MAIN  ///////////////////////////////
 int main (int argc, char *argv[]) {
 
