@@ -1,21 +1,25 @@
 #include "ppmrw.h"
 
-typedef struct Camera {
-    float width;
-    float height;
-} Camera;
+float camWidth = .5;
+float camHeight = .5;
 
-typedef struct Sphere {
-    float color;
-    float poisiton;
-    float radius;
-} Sphere;
+float BLACK[3] = {0,0,0};
 
-typedef struct Plane {
-    float color;
-    float position;
-    float normal;
-} Plane;
+typedef struct object_t {
+
+    int type; // 998 Plane; 999 sphere
+    float color[3];
+    float center[3];
+
+   union{
+      float radius;
+      float normal[3];
+   } value;
+
+};
+
+struct object_t objects[128];
+int objectCount = 0;
 
 
 void readLine(char* filename) {
@@ -38,17 +42,84 @@ void readLine(char* filename) {
      } 
      fclose(file);      
 }
+///////////// GETPIXDATA /////////////////////////////
+void getPixData (float imgHeight, float imgWidth){
 
+   int rowIndex = 0, colIndex = 0;
+   float pixY,pixX, pixZ;
+   float unitRayVector[3];
+   float ray[3];
+
+   float pixHeight = camHeight/imgHeight;
+   float pixWidth = camWidth/imgWidth;
+   float xImgCenter = imgWidth/2;
+   float yImgCenter = imgHeight/2;
+
+
+
+   for(rowIndex; rowIndex < pixHeight; rowIndex++){
+      //py = cy - h/2 + pixHeight * (rowIndex + .5) // Y COORD OF ROW
+      pixY = yImgCenter - (camHeight/2) + (pixHeight * (rowIndex + .5));
+      for(colIndex; colIndex < pixWidth; colIndex++){
+         //px = cx - w/2 + pixwidth * (colIndex + .5) // X COORD OF COLUMN
+         pixX = xImgCenter - (camWidtht/2) + (pixWidth * (colIndex + .5));
+         //pz = -zp; // Z COORD IS ON SCREEN ( THE PLANE IS -1 )
+         pixZ = -1;
+         //ur = p/||P|| //UNIT RAY VECTOR (P divided by P magnitude (length))
+         //unitRayVector = p/(length(p))
+         unitRayVector[0] = input[0]/(length(input[0]));
+         unitRayVector[1] = input[1]/(length(input[1]));
+         unitRayVector[2] = input[2]/(length(input[2]));
+         //x = shoot(unitRayVector) // RETURN POSITION ON FIRST HIT
+         ray = shoot(unitRayVector);
+         if(ray!= NULL){
+            //image[rowIndex][colIndex] = shade(x); // PIXEL COLORED BY OBJECT HIT
+            output[rowIndex][colIndex] = shade(ray);
+         }
+         else{
+            output[rowIndex][colIndex] = shade(BLACK);
+         }
+
+      }
+   }
+}
 ///////////// SHOOT /////////////////////////////////
 // I believe this is a function we need according to section 4.1 of House's Raycasting
 //shoot() is a function that “shoots” the ray out into the scene,
 //and returns the position of the first intersection of the ray with an object in the
 //scene
 
+float[] shoot(float[] unitRayVector){
+
+   float foundObject[3];
+   float foundObjectColor[3];
+   int objIndex;
+
+   for(objIndex = 0; objIndex < objectCount; objIndex++){
+      if (objects[objIndex].center[0] = unitRayVector[0] &&
+          objects[objIndex].center[1] = unitRayVector[1] &&
+          objects[objIndex].center[2] = unitRayVector[2]){
+             foundObject = unitRayVector;
+             foundObjectColor[0] = objects[objIndex].color[0];
+             foundObjectColor[1] = objects[objIndex].color[1];
+             foundObjectColor[2] = objects[objIndex].color[2];
+      }
+   }
+
+   return foundObjectColor;// RETURN UNITRAYRESULTS
+}
+
 ///////////// SHADE /////////////////////////////////
 // I believe this is a function we need according to section 4.1 of House's Raycasting
 //shade() function determines what color to assign the current pixel,
 //based on the position of the “hit” returned by shoot()
+float[] shade(float[] foundColors, float imgX, float imgY){
+
+
+
+
+   return foundColor; // RETURN SHADE FOUND
+}
 
 
 /////////////   MAIN  ///////////////////////////////
