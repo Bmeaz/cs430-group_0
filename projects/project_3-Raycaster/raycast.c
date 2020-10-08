@@ -1,302 +1,190 @@
-#include "ppmrw.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+#include "jsonparser.c"
 
+typedef struct {
+  int type; // 0 = camera, 1 = sphere, 2 = plane
+  double color[3];
+  union {
+    struct {
+      double width;
+      double height;
+    } camera;
 
-// maximum number of objects
-#define MAX_NODES 128
+    struct {
+      double position[3];
+      double radius;
+    } sphere;
 
-// distance to near clipping plane
-#define zp 1
+    struct {
+      double position[3];
+      double normal[3];
+    } plane;
+  };
+} Object;
 
-// distance to far clipping plane
-#define fcp 200
+double sphereIntersection(double* Ro, double* Rd, double* Center, double r) {
+  	double a = sqr(Rd[0]) + sqr(Rd[1]) + sqr(Rd[2]);
+  	double b = 2*(Ro[0]*Rd[0] + Ro[1]*Rd[1] + Ro[2]*Rd[2] - Rd[0]*Center[0] - Rd[1]*Center[1] - Rd[2]*Center[2]);
+  	double c = sqr(Ro[0]) + sqr(Ro[1]) + sqr(Ro[2]) + sqr(Center[0]) +
+             sqr(Center[1]) + sqr(Center[2]) - 2*(Ro[0]*Center[0]
+             + Ro[1]*Center[1] + Ro[2]*Center[2]) - sqr(r);
+  	double det = sqr(b) - 4*a*c;
+  	if (det < 0) return -1;
+  	det = sqrt(det);
+  	double t0 = (-b - det) / (2*a);
+ 	double t1 = (-b + det) / (2*a);
+	if (t0 > 0) return t0;
+ 	if (t1 > 0) return t1;
 
-// json array
-node scene[MAX_NODES];
-
-// number of nodes. Should be <= MAX_NODES
-int nNodes;
-
-// viewport size
-int width, height;
-
-
-// compute the intersection between ray and plane
-// intersection should be between near clipping plane and far clipping plane
-// otherwise it is discarded
-int ray_plane(double *u, node *pNode, double *result)
-{
-  double *n = pNode->normal;
-  double *p = pNode->position;
-
-  double dot_npos = n[0] * p[0] + n[1] * p[1] + n[2] * p[2];
-  double dot_nu   = n[0] * u[0] + n[1] * u[1] + n[2] * u[2];
-
-  // almost divide by zero
-  if (fabs(dot_nu) <= 0.0001)
-    return 0;
-
-  // compute the value of t where the ray intersects the plane
-  double t = dot_npos / dot_nu;
-
-  // result = [0,0,0] + T * u
-  result[0] = t*u[0];
-  result[1] = t*u[1];
-  result[2] = t*u[2];
-
-  // intersection is valid if z is between near and far clipping planes
-  return (result[2] >= zp && result[2] <= fcp) ? 1 : 0;
+  	return -1;
 }
 
-// compute the intersection between ray and sphere
-// intersection should be between near clipping plane and far clipping plane
-// otherwise it is discarded
-int ray_sphere(double *u, node *pNode, double *result)
-{
-  double *c = pNode->position;
-  double r = pNode->radius;
+double planeIntersection(double* Ro, double* Rd, double* position, double* normal) {
+  	double t = - (normal[0]*Ro[0] + normal[1]*Ro[1] + normal[2]*Ro[2] - normal[0]*position[0]
+                - normal[1]*position[1] - normal[2]*position[2]) / (normal[0]*Rd[0]
+                + normal[1]*Rd[1] + normal[2]*Rd[2]);
 
-  // tclose = pr + dot(u,c) ... but pr = [0,0,0]
-  double tclose = u[0] * c[0] + u[1] * c[1] + u[2] * c[2];
-
-  // compute xClose
-  double pclose[3];
-  pclose[0] = tclose * u[0];
-  pclose[1] = tclose * u[1];
-  pclose[2] = tclose * u[2];
-
-  double d = sqrt(
-    (pclose[0] - c[0])*(pclose[0] - c[0]) +
-    (pclose[1] - c[1])*(pclose[1] - c[1]) +
-    (pclose[2] - c[2])*(pclose[2] - c[2]));
-  if (d > r) // no intersection
-    return 0;
-  if (d == r) // one intersection
-  {
-    // out of clipping planes
-    if (pclose[2] < zp || pclose[2] > fcp)
-      return 0;
-
-    // inside clipping planes...then copy the result
-    memcpy(result, pclose, sizeof(double) * 3);
-    return 1;
-  }
-
-  // default case, d < r; we have 2 intersections
-  double a = sqrt(r*r - d*d);
-  result[0] = (tclose - a)*u[0];
-  result[1] = (tclose - a)*u[1];
-  result[2] = (tclose - a)*u[2];
-  return (result[2] >= zp && result[2] <= fcp) ? 1 : 0;
+  	if (t > 0) return t;
+	return -1;
 }
 
-
-// return 1 if we found an intersection of the vector "u" with the scene
-// pos is the resulting hit position in the space, and "index" the resulting object index
-int shoot(double *u, double *pos, int *index)
-{
-  int closest_index = -1;
-  double closest_distance = 0.0;
-  double closest_intersection_point[3];
-  double intersection_point[3];
-  for (int i = 0; i < nNodes; i++)
-  {
-    if (strcmp(scene[i].type, "plane") == 0)
-    {
-      if (ray_plane(u, &scene[i], intersection_point))
-      {
-        double distance = sqrt(intersection_point[0] * intersection_point[0] +
-                               intersection_point[1] * intersection_point[1] +
-                               intersection_point[2] * intersection_point[2]);
-        if (closest_index == -1 || distance < closest_distance)
-        {
-          closest_distance = distance;
-          memcpy(closest_intersection_point, intersection_point, sizeof(double) * 3);
-          closest_index = i;
-        }
-      }
-    }
-    else if (strcmp(scene[i].type, "sphere") == 0)
-    {
-      if (ray_sphere(u, &scene[i], intersection_point))
-      {
-        double distance = sqrt(intersection_point[0] * intersection_point[0] +
-          intersection_point[1] * intersection_point[1] +
-          intersection_point[2] * intersection_point[2]);
-        if (closest_index == -1 || distance < closest_distance)
-        {
-          closest_distance = distance;
-          memcpy(closest_intersection_point, intersection_point, sizeof(double) * 3);
-          closest_index = i;
-        }
-      }
-    }
-  }
-
-  if (closest_index >= 0)
-  {
-    *index = closest_index;
-    memcpy(pos, closest_intersection_point, sizeof(double) * 3);
-    return 1;
-  }
-  return 0;
+int intersect(double* Rd, int objectNum, Object** objects) {
+	int closestObjectNum = -1;
+	double bestT = INFINITY;
+	int i;
+	double t;
+	double Ro[3] = { 0, 0, 0 };
+	for (i = 0; i<objectNum; i++){
+		if (objects[i]->type == 1) {
+			t = sphereIntersection(Ro, Rd, objects[i]->sphere.position, objects[i]->sphere.radius);
+			if (t) {
+				if (t > 0 && t <= bestT) {
+					bestT = t;
+					closestObjectNum = i;
+				}
+			}
+			else {
+				fprintf(stderr, "Error: finding the distance unsuccessfully.\n");
+				return (1);
+			}
+		}
+		else if (objects[i]->type == 2) {
+			t = planeIntersection(Ro, Rd, objects[i]->plane.position, objects[i]->plane.normal);
+			if (t) {
+				if (t > 0 && t <= bestT) {
+					bestT = t;
+					closestObjectNum = i;
+				}
+			}
+			else {
+				fprintf(stderr, "Error: finding the distance unsuccessfully.\n");
+				return (1);
+			}
+		}
+	}
+	return closestObjectNum;
 }
 
-// to the ray casting, and save it into filename
-void ray_casting(const char *filename)
-{
-  // do some validations
-  if (nNodes <= 0)
-  {
-    fprintf(stderr, "Empty scene\n");
-    exit(1);
-  }
-
-  // look for camera object
-  int found = 0;
-  double w, h;
-  for (int i = 0; i < nNodes; i++)
-  {
-    if (strcmp(scene[i].type, "camera") == 0)
-    {
-      found = 1;
-      w = scene[i].width;
-      h = scene[i].height;
-      if (w <= 0.0 || w > 4096.0 || h< 0.0 || h > 4096.0)
-      {
-        fprintf(stderr, "Invalid camera. Please, check the scene\n");
-        exit(1);
-      }
-    }
-  }
-  if (found == 0)
-  {
-    fprintf(stderr, "Camera object not found. Invalid scene\n");
-    exit(1);
-  }
-
-
-  // creating image buffer
-  unsigned char *imageR = NULL, *imageG = NULL, *imageB = NULL;
-  /*
-  * Dynamically allocate memory to hold image buffers
-  */
-  imageR = (unsigned char *)malloc(height * width * sizeof(unsigned char));
-  imageG = (unsigned char *)malloc(height * width * sizeof(unsigned char));
-  imageB = (unsigned char *)malloc(height * width * sizeof(unsigned char));
-
-  /*
-  * Check validity
-  */
-  if (imageR == NULL || imageG == NULL || imageB == NULL)
-  {
-    fprintf(stderr, "Memory allocation failed for the image\n");
-    exit(1);
-  }
-
-  // erasing image
-  int s = width * height;
-  memset(imageR, 0, s);
-  memset(imageG, 0, s);
-  memset(imageB, 0, s);
-
-  // the height of one pixel
-  double pixheight = h / (double)height;
-
-  // the width of one pixel
-  double pixwidth = w / (double)width;
-
-  // for each row
-  for(int i = 0; i < height; i++)
-  {
-    // y coord of row
-    double py = -h/2.0 + pixheight * (i + 0.5);
-
-    // for each column
-    for(int j = 0; j < width; j++)
-    {
-      // x coord of column
-      double px = -w/2.0 + pixwidth * (j + 0.5);
-
-      // z coord is on screen
-      double pz = zp;
-
-      // length of p vector
-      double norm = sqrt(px*px + py*py + pz*pz);
-
-      // unit ray vector
-      double ur[3] = {px/norm, py/norm, pz/norm};
-
-      // return position of first hit
-      double hit[3];
-      int index;
-      if (shoot(ur, hit, &index))
-      {
-        // pixel colored by object hit
-        int k = (height-1-i) * width + j;
-
-        // object should have a color... otherwise, nothing to do!
-        if (scene[index].color != NULL)
-        {
-          imageR[k] = (unsigned char)(scene[index].color[0] * 255.0);
-          imageG[k] = (unsigned char)(scene[index].color[1] * 255.0);
-          imageB[k] = (unsigned char)(scene[index].color[2] * 255.0);
-        }
-      }
-    }
-  }
-
-
-  // save ppm file
-  writePPM3(imageR, imageG, imageB, height, width, filename);
-
-  // free image
-  free(imageR);
-  free(imageG);
-  free(imageB);
-}
-
-void free_scene()
-{
-  for (int i = 0; i < nNodes; i++)
-  {
-    if (scene[i].color != NULL)
-      free(scene[i].color);
-    if (scene[i].position != NULL)
-      free(scene[i].position);
-    if (scene[i].normal != NULL)
-      free(scene[i].normal);
-    if (scene[i].type != NULL)
-      free(scene[i].type);
-  }
-}
-
-int main(int argc, char *argv[])
-{
-	if (argc != 5)
-	{
-		fprintf(stderr, "use raycast <width> <height> <input.json> <output.ppm>\n");
-		return 1;
+PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
+	PPMimage* buffer = (PPMimage*)malloc(sizeof(PPMimage));
+	if (objects[0] == NULL) {
+		fprintf(stderr, "Error: no object found");
+		exit(1);
+	}
+	int cameraFound = 0;
+	double width;
+	double height;
+	int i;
+	for (i = 0; objects[i] != 0; i += 1) {
+		if (objects[i]->type == 0) {
+			cameraFound = 1;
+			width = objects[i]->camera.width;
+			height = objects[i]->camera.height;
+			if (width <= 0 || height <= 0) {
+				fprintf(stderr, "Error: invalid camera size");
+				exit(1);
+			}
+		}
+	}
+	if (cameraFound == 0) {
+		fprintf(stderr, "Error: Camera not found");
+		exit(1);
 	}
 
-	width = atoi(argv[1]);
-	if (width <= 0 || width > 4906)
-	{
-		fprintf(stderr, "Wrong output image size.\n");
-		return 1;
+	buffer->pixData = (unsigned char*)malloc(w*h * sizeof(PPMRGBpixel));
+	PPMRGBpixel *pixel = (PPMRGBpixel*)malloc(sizeof(PPMRGBpixel));
+	if (buffer->pixData == NULL || buffer == NULL) {
+		fprintf(stderr, "Error: memory allocation failed. \n");
+		exit(1);
 	}
 
-	height = atoi(argv[2]);
-	if (height <= 0 || height > 4906)
-	{
-		fprintf(stderr, "Wrong output image size.\n");
-		return 1;
-	}
+	double pixwidth = width / w;
+	double pixheight = height / h;
+	double pointx, pointy, pointz;
+	int j, k;
+	for (k = 0; k<h; k++) {
+		int count = (h-k-1)*w*3;
+		double vy = -height / 2 + pixheight * (k + 0.5);
+		for (j = 0; j<w; j++) {
+			double vx = -width / 2 + pixwidth * (j + 0.5);
+			double Rd[3] = { vx, vy, 1 };
 
-  // clear all possible nodes of the array
-  memset(scene, 0, sizeof(node) * MAX_NODES);
-	read_scene(argv[3], &nNodes, scene);
-	ray_casting(argv[4]);
-  free_scene();
-	return 0;
+			normalize(Rd);
+			int intersection = intersect(Rd, i, objects);
+			if (intersection>=0) {
+				pixel->r = (int)((objects[intersection]->color[0]) * 255);
+				pixel->g = (int)((objects[intersection]->color[1]) * 255);
+				pixel->b = (int)((objects[intersection]->color[2]) * 255);
+			}
+			else {
+				pixel->r = 0;
+				pixel->g = 0;
+				pixel->b = 0;
+			}
+			buffer->pixData[count++] = pixel->r;
+			buffer->pixData[count++] = pixel->g;
+			buffer->pixData[count++] = pixel->b;
+			}
+		}
+	return buffer;
+}
+
+
+int main (int argc, char *argv[]) {
+
+    // number of arguments is incorrect
+    if (argc != 5) {
+       fail("Invaild number of arguments");
+    }
+    int width = atoi(argv[1]);
+    int height = atoi(argv[2]);
+    char *input = argv[3];
+    char *output = argv[4];
+
+    // First argument given is invalid
+    if (width <= 0) {
+        fail( "Invalid Width argument");
+    }
+    // Second argument given is invalid
+    else if (height <= 0) {
+        fail( "Invalid Height argument");
+    }
+    // Third Argument: file does not exist
+    else if (!fileExists(input)) {
+        fail("input file does not exist");
+    }
+    // Third Argument: incorrect type
+    else if(!isFileType(input, ".json")) {
+        fail("input file is not of type .json");
+    }
+    // Fourth Argument: incorrect type
+    else if(!isFileType(output, ".ppm")) {
+        fail("output file is not of type .ppm");
+    }
+
+    readLine(input);
+
+    return(0);
 }
