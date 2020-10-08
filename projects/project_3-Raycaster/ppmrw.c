@@ -60,6 +60,3 @@ void writeP6(struct PPM ppm, char* outFile) {
 
     fclose(file);
 }
-
-
-
