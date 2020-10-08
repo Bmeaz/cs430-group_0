@@ -43,7 +43,7 @@ void readLine(char* filename) {
      fclose(file);      
 }
 ///////////// GETPIXDATA /////////////////////////////
-void getPixData (float imgHeight, float imgWidth){
+void getPixData (float input[], float **output, float imgHeight, float imgWidth){
 
    int rowIndex = 0, colIndex = 0;
    float pixY,pixX, pixZ;
@@ -62,7 +62,7 @@ void getPixData (float imgHeight, float imgWidth){
       pixY = yImgCenter - (camHeight/2) + (pixHeight * (rowIndex + .5));
       for(colIndex; colIndex < pixWidth; colIndex++){
          //px = cx - w/2 + pixwidth * (colIndex + .5) // X COORD OF COLUMN
-         pixX = xImgCenter - (camWidtht/2) + (pixWidth * (colIndex + .5));
+         pixX = xImgCenter - (camWidth/2) + (pixWidth * (colIndex + .5));
          //pz = -zp; // Z COORD IS ON SCREEN ( THE PLANE IS -1 )
          pixZ = -1;
          //ur = p/||P|| //UNIT RAY VECTOR (P divided by P magnitude (length))
@@ -71,7 +71,8 @@ void getPixData (float imgHeight, float imgWidth){
          unitRayVector[1] = input[1]/(length(input[1]));
          unitRayVector[2] = input[2]/(length(input[2]));
          //x = shoot(unitRayVector) // RETURN POSITION ON FIRST HIT
-         ray = shoot(unitRayVector);
+         shoot(&unitRayVector);
+         memcpy(ray,unitRayVector, sizeof(ray));
          if(ray!= NULL){
             //image[rowIndex][colIndex] = shade(x); // PIXEL COLORED BY OBJECT HIT
             output[rowIndex][colIndex] = shade(ray);
@@ -89,36 +90,32 @@ void getPixData (float imgHeight, float imgWidth){
 //and returns the position of the first intersection of the ray with an object in the
 //scene
 
-float[] shoot(float[] unitRayVector){
+void shoot(float *unitRayVector){
 
    float foundObject[3];
    float foundObjectColor[3];
    int objIndex;
 
    for(objIndex = 0; objIndex < objectCount; objIndex++){
-      if (objects[objIndex].center[0] = unitRayVector[0] &&
-          objects[objIndex].center[1] = unitRayVector[1] &&
-          objects[objIndex].center[2] = unitRayVector[2]){
-             foundObject = unitRayVector;
-             foundObjectColor[0] = objects[objIndex].color[0];
-             foundObjectColor[1] = objects[objIndex].color[1];
-             foundObjectColor[2] = objects[objIndex].color[2];
+      if (objects[objIndex].center[0] == unitRayVector[0] &&
+          objects[objIndex].center[1] == unitRayVector[1] &&
+          objects[objIndex].center[2] == unitRayVector[2]){
+             memcpy(unitRayVector, foundObject, sizeof(unitRayVector));
+             unitRayVector[0] = objects[objIndex].color[0];
+             unitRayVector[1] = objects[objIndex].color[1];
+             unitRayVector[2] = objects[objIndex].color[2];
       }
    }
-
-   return foundObjectColor;// RETURN UNITRAYRESULTS
 }
 
 ///////////// SHADE /////////////////////////////////
 // I believe this is a function we need according to section 4.1 of House's Raycasting
 //shade() function determines what color to assign the current pixel,
 //based on the position of the “hit” returned by shoot()
-float[] shade(float[] foundColors, float imgX, float imgY){
+void shade(float foundColors[], float imgX, float imgY){
 
 
 
-
-   return foundColor; // RETURN SHADE FOUND
 }
 
 
