@@ -10,6 +10,8 @@
 #include <math.h>
 #include <assert.h>
 
+float sqr( float value);
+
 void v3_from_points (float *dst, float *a, float *b);
 
 void v3_add (float *dst, float *a, float *b);

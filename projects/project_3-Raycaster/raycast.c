@@ -6,11 +6,10 @@ int PLANE = 998;
 int CAMERA = 997;
 
 int numObjects = 0;
-int camWidth = 0, camHeight = 0;
+float camWidth = 0, camHeight = 0;
 
-
-float BLACK[3] = {0,0,0};
-
+float origin[3] = {0,0,0};
+float backgroundColor[3] = {0,0,0};
 typedef struct Object {
 
     int type; 
@@ -25,57 +24,20 @@ typedef struct Object {
 
 struct Object objects[128];
 
+// methods
 void getTuple(char str[], float *arr);
+void getDircetion(float *rayDirection, float x, float y, float z);
+float intersection(float *direct, int objNum);
 void printObjects();
+void raycast(PPM *image);
 bool resetValues (char* name, char* value);
 void readFile(char* filename);
+void setArray(float *dest, float *arr);
 void setCamVal(char name[], char value[]);
 int setObjName(char str[]);
 void setObjVal(char name[], char value[]);
- /*
-///////////// GETPIXDATA /////////////////////////////
-void getPixData (float input[], float **output, float imgHeight, float imgWidth){
-
-   int rowIndex = 0, colIndex = 0;
-   float pixY,pixX, pixZ;
-   float unitRayVector[3];
-   float ray[3];
-
-   float pixHeight = camHeight/imgHeight;
-   float pixWidth = camWidth/imgWidth;
-   float xImgCenter = imgWidth/2;
-   float yImgCenter = imgHeight/2;
 
 
-
-   for(rowIndex; rowIndex < pixHeight; rowIndex++){
-      //py = cy - h/2 + pixHeight * (rowIndex + .5) // Y COORD OF ROW
-      pixY = yImgCenter - (camHeight/2) + (pixHeight * (rowIndex + .5));
-      for(colIndex; colIndex < pixWidth; colIndex++){
-         //px = cx - w/2 + pixwidth * (colIndex + .5) // X COORD OF COLUMN
-         pixX = xImgCenter - (camWidth/2) + (pixWidth * (colIndex + .5));
-         //pz = -zp; // Z COORD IS ON SCREEN ( THE PLANE IS -1 )
-         pixZ = -1;
-         //ur = p/||P|| //UNIT RAY VECTOR (P divided by P magnitude (length))
-         //unitRayVector = p/(length(p))
-         unitRayVector[0] = input[0]/(length(input[0]));
-         unitRayVector[1] = input[1]/(length(input[1]));
-         unitRayVector[2] = input[2]/(length(input[2]));
-         //x = shoot(unitRayVector) // RETURN POSITION ON FIRST HIT
-         shoot(&unitRayVector);
-         memcpy(ray,unitRayVector, sizeof(ray));
-         if(ray!= NULL){
-            //image[rowIndex][colIndex] = shade(x); // PIXEL COLORED BY OBJECT HIT
-            output[rowIndex][colIndex] = shade(ray);
-         }
-         else{
-            output[rowIndex][colIndex] = shade(BLACK);
-         }
-
-      }
-   }
-}
-*/
 ///////////// GETTUPLE /////////////////////////////////
 void getTuple(char str[], float *arr) {
     int counter = 0;
@@ -101,16 +63,54 @@ void getTuple(char str[], float *arr) {
     }
 }
 
+///////////// INTERSECTION /////////////////////////////////
+float intersection(float *direct, int objNum) {
+    float distance = INFINITY, value;
+    float center[3] = {objects[objNum].center[0], 
+                       objects[objNum].center[1], 
+                       objects[objNum].center[2]};
+    if (objects[objNum].type == SPHERE) {
+        float oc[3] = {origin[0]-center[0], origin[1]-center[1], origin[2]-center[2]};
+        float b = 2 * (direct[0] * oc[0] + direct[1] * oc[1] + direct[2] * oc[2]);
+        float c = sqr(oc[0]) + sqr(oc[1]) + sqr(oc[2]) - sqr(objects[objNum].value.radius);
+        float discrim = sqr(b) - (4 * c);
+        if (discrim > 0) {
+            value = (b + sqrtf(discrim))/2;
+            if (value > 0) {
+               distance = value;
+            }
+            else {
+               distance = value * -1;
+            }
+        }
+    }
+    else if (objects[objNum].type == PLANE) {
+        float normal[3] = {objects[objNum].value.normal[0], 
+                           objects[objNum].value.normal[1], 
+                           objects[objNum].value.normal[2]};
+        float value =  (normal[0]*origin[0] + normal[1]*origin[1] + normal[2]*origin[2] 
+                      - normal[0]*center[0] - normal[1]*center[1] - normal[2]*center[2]) 
+                     / (normal[0]*direct[0] + normal[1]*direct[1] + normal[2]*direct[2]);
+        if (value > 0) {
+            distance = value;
+        } 
+    }
+
+    return distance;
+}
+
+
 /// TEMPORARY FUNCTION
 ///////////// PRINTOBJECTS /////////////////////////////////
 void printObjects() {
+   printf("Camera values:\n\tWidth = %f\n\tHeight = %f\n", camWidth, camHeight);
    for( int x = 0; x <= numObjects; x++ ) {
       if( objects[x].type == SPHERE) {
-         printf("\nObject found: Sphere\n");
+         printf("\nObject %d: Sphere\n", x + 1);
          printf("\tRadius = %f\n", objects[x].value.radius);
       }
       else if( objects[x].type == PLANE) {
-         printf("\nObject found: Plane\n");
+         printf("\nObject %d: Plane\n", x + 1);
          printf("\tnormal = %f, %f, %f\n", objects[x].value.normal[0], 
                                            objects[x].value.normal[1], 
                                            objects[x].value.normal[2]);
@@ -119,7 +119,46 @@ void printObjects() {
       printf("\tcenter = %f, %f, %f\n", objects[x].center[0], objects[x].center[1], objects[x].center[2]);
    }
 } 
-  
+
+///////////// RAYCAST /////////////////////////////
+void raycast(PPM *image){
+    float xdist, ydist, zdist = -1;
+    float pixHeight = camHeight/image->height, pixWidth = camWidth/image->width;
+    for(int row = 0; row < image->height; row++){
+
+        xdist = origin[1] - camHeight / 2 + pixHeight * (row+0.5);
+
+        for(int col = 0; col < image->width; col++){
+
+            ydist = origin[0] - camWidth / 2 + pixWidth *  (col+0.5);
+
+            float direct[3] = {xdist, ydist, zdist};
+            v3_normalize(direct, direct);
+
+            int nearObj = 0;
+            float nearDist = INFINITY;
+            for (int num = 0; num < numObjects; num++) {
+                float interectDist = intersection(direct, num);          
+                if (interectDist < nearDist) {
+                    nearDist = interectDist;
+                    nearObj = num;
+                }
+            }
+            int location = col*image->width*3+row*3;
+            if (nearDist != INFINITY) {
+                image->pixData[location] = objects[nearObj].color[0];
+                image->pixData[location+1] = objects[nearObj].color[1];
+                image->pixData[location+2] = objects[nearObj].color[2];
+            }
+            else {
+                image->pixData[location] = backgroundColor[0];
+                image->pixData[location+1] = backgroundColor[1];
+                image->pixData[location+2] = backgroundColor[2];
+            }
+        }
+    }
+}
+
 ///////////// RESETVALUES /////////////////////////////////
 bool resetValues (char* name, char* value) {
     name[0] = '\0';
@@ -129,7 +168,7 @@ bool resetValues (char* name, char* value) {
  
 ///////////// READFILE /////////////////////////////////
 void readFile(char* filename) {
-     FILE *file = fopen(filename, "w");
+     FILE *file = fopen(filename, "r");
      char curChar = getc(file);
      char name[100], value[100];
      bool isName = resetValues(name, value), inTuple = false;
@@ -177,27 +216,25 @@ void readFile(char* filename) {
      }
      numObjects--;
      fclose(file);      
-}
+} 
 
-
-   
 ///////////// SETCAMVALUE /////////////////////////////////
 void setCamVal(char name[], char value[]) {
-    float val = atof(value);
     if (strcmp(name, "width")) {
-        camWidth = val;
+        camWidth = atof(value);
     }
     else if (strcmp(name, "height")) {
-        camHeight = val;
+        camHeight = atof(value);
     }
     else {
         fail("a value or name of the camera is incorrect in the input file");
     }
 }
 
+
+
 ///////////// SETOBJNAME /////////////////////////////////
 int setObjName(char str[]) {
-    
     if (strcmp(str, "camera") == 0) {
         return CAMERA;
     }
@@ -249,42 +286,7 @@ void setObjVal(char name[], char value[]) {
     }
 
 }
-/*
-///////////// SHADE /////////////////////////////////
-// I believe this is a function we need according to section 4.1 of House's Raycasting
-//shade() function determines what color to assign the current pixel,
-//based on the position of the “hit” returned by shoot()
-void shade(float foundColors[], float imgX, float imgY){
 
-
-
-}
-
-
-///////////// SHOOT /////////////////////////////////
-// I believe this is a function we need according to section 4.1 of House's Raycasting
-//shoot() is a function that “shoots” the ray out into the scene,
-//and returns the position of the first intersection of the ray with an object in the
-//scene
-
-void shoot(float *unitRayVector){
-
-   float foundObject[3];
-   float foundObjectColor[3];
-   int objIndex;
-
-   for(objIndex = 0; objIndex < objectCount; objIndex++){
-      if (objects[objIndex].center[0] == unitRayVector[0] &&
-          objects[objIndex].center[1] == unitRayVector[1] &&
-          objects[objIndex].center[2] == unitRayVector[2]){
-             memcpy(unitRayVector, foundObject, sizeof(unitRayVector));
-             unitRayVector[0] = objects[objIndex].color[0];
-             unitRayVector[1] = objects[objIndex].color[1];
-             unitRayVector[2] = objects[objIndex].color[2];
-      }
-   }
-}
-*/
 /////////////   MAIN  ///////////////////////////////
 int main (int argc, char *argv[]) {
 
@@ -319,6 +321,23 @@ int main (int argc, char *argv[]) {
     }
     
     readFile(input);
-    printObjects();
+   
+    if (camHeight == 0 || camWidth == 0 ) {
+        fail("camera not properly set");
+    }
+
+    printObjects(); //remove later
+
+    // create image
+    PPM *image = (PPM*)malloc(sizeof(PPM));
+    image->pixData = (unsigned char*)malloc(width*height*sizeof(Pixel)); 
+    image->maxColVal = 255;  
+    image->width = width;
+    image->height = height;
+
+    raycast(image);
+    writeP6(image, output);
+    free(image);
     return(0);
 }
+

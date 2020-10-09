@@ -24,6 +24,7 @@ typedef struct Pixel {
     uint8_t blue;
 } Pixel;
 
+
 void fail (char *errMsg);
 
 bool fileExists (char *filename);
@@ -32,8 +33,8 @@ bool isFileType (char *filename, char *fileType);
 
 bool isValidForm (int form);
 
-void writeP3(struct PPM ppm, char* outFile);
+void writeP3(PPM *ppm, char *outFile);
 
-void writeP6(struct PPM ppm, char* outFile);
+void writeP6(PPM *ppm, char *outFile);
 
 #endif

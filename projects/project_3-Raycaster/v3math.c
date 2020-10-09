@@ -1,5 +1,9 @@
 #include "v3math.h"
 
+float sqr(float value) {
+    return value * value;
+}
+
 void v3_from_points(float *dst, float *a, float *b) {
     dst[0] = b[0] - a[0];
     dst[1] = b[1] - a[1];
