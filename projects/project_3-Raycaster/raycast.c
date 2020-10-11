@@ -69,8 +69,10 @@ float intersection(float *direct, int objNum) {
     float center[3] = {objects[objNum].center[0], 
                        objects[objNum].center[1], 
                        objects[objNum].center[2]};
+    float oc[3] = {origin[0]-center[0], 
+                   origin[1]-center[1], 
+                   origin[2]-center[2]};
     if (objects[objNum].type == SPHERE) {
-        float oc[3] = {origin[0]-center[0], origin[1]-center[1], origin[2]-center[2]};
         float b = 2 * (direct[0] * oc[0] + direct[1] * oc[1] + direct[2] * oc[2]);
         float c = sqr(oc[0]) + sqr(oc[1]) + sqr(oc[2]) - sqr(objects[objNum].value.radius);
         float discrim = sqr(b) - (4 * c);
@@ -79,13 +81,9 @@ float intersection(float *direct, int objNum) {
             if (value > 0) {
                distance = value;
             }
-            else {
-               distance = value * -1;
-            }
         }
     }
     else if (objects[objNum].type == PLANE) {
-	printf("\n I FOUND A PLANE\n");
         float normal[3] = {objects[objNum].value.normal[0], 
                            objects[objNum].value.normal[1], 
                            objects[objNum].value.normal[2]};
@@ -100,21 +98,15 @@ float intersection(float *direct, int objNum) {
 	
 
 
-        float value =  -normal[0]*(origin[0] - center[0]) + normal[1]*(origin[1] - center[1]) + normal[2]*(origin[2] - center[2]); 
-                     // - (normal[0]*center[0]) - (normal[1]*center[1]) - (normal[2]*center[2])) 
-           value = value / ((normal[0]*direct[0]) + (normal[1]*direct[1]) + (normal[2]*direct[2]));
+        value =  -normal[0]*oc[0] + normal[1]*oc[1] + normal[2]*oc[2];
 
-//	float value = (normal[0]*(origin[0] - direct[0])
-	printf("\nValue: %f\n" , value);
+        //	float value = (normal[0]*(origin[0] - direct[0])
+        value /= normal[0]*direct[0] + normal[1]*direct[1] + normal[2]*direct[2];
+	    printf("\nValue: %f\n" , value);
         if (value > 0) {
             distance = value;
         }
-	else{
-	    distance = value * -1;
-	}
-
     }
-
     return distance;
 }
 
@@ -153,12 +145,12 @@ void raycast(PPM *image){
 		// CHANGED ORIGIN FROM 0 TO 1
             ydist = origin[1] - (camWidth / 2) + (pixWidth *  (col+0.5));
 
-            float direct[3] = {xdist, ydist, zdist};
+            float direct[3] = {xdist-origin[0], ydist-origin[1], zdist-origin[2]};
             v3_normalize(direct, direct);
 
             int nearObj = 0;
             float nearDist = INFINITY;
-            for (int num = 0; num < numObjects; num++) {
+            for (int num = 0; num <= numObjects; num++) {
                 float intersectDist = intersection(direct, num);          
                 if (intersectDist < nearDist) {
                     nearDist = intersectDist;
@@ -277,9 +269,14 @@ void setObjVal(char name[], char value[]) {
     bool failure = false;
     if (strcmp(name, "color") == 0) {
         getTuple(value, array);
-        objects[numObjects].color[0] = array[0];
-        objects[numObjects].color[1] = array[1];
-        objects[numObjects].color[2] = array[2];     
+        for(int x = 0; x < 3; x++) {
+            if(array[x] <= 1 && array[x] >= 0) {
+                objects[numObjects].color[x] = array[x];
+            }
+            else {
+                failure = true;
+            }
+        }
     }
     else if (strcmp(name, "position") == 0) {
         getTuple(value, array);
@@ -346,7 +343,6 @@ int main (int argc, char *argv[]) {
     if (camHeight == 0 || camWidth == 0 ) {
         fail("camera not properly set");
     }
-
     printObjects(); //remove later
 
     // create image
@@ -358,7 +354,7 @@ int main (int argc, char *argv[]) {
 
     raycast(image);
     writeP3(image, output);
-    printf("\nOutput Image made\n");
+    printf("\nCreated image %s\n", output);
     free(image);
     return(0);
 }
