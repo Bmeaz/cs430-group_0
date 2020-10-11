@@ -85,15 +85,34 @@ float intersection(float *direct, int objNum) {
         }
     }
     else if (objects[objNum].type == PLANE) {
+	printf("\n I FOUND A PLANE\n");
         float normal[3] = {objects[objNum].value.normal[0], 
                            objects[objNum].value.normal[1], 
                            objects[objNum].value.normal[2]};
-        float value =  (normal[0]*origin[0] + normal[1]*origin[1] + normal[2]*origin[2] 
-                      - normal[0]*center[0] - normal[1]*center[1] - normal[2]*center[2]) 
-                     / (normal[0]*direct[0] + normal[1]*direct[1] + normal[2]*direct[2]);
+
+/*
+        float a = -(origin[0] * (origin[0] - center[0]) * normal[0] / ((direct[0] * normal[0]));
+        float b = -(origin[1] * (origin[1] - center[1]) * normal[1] / ((direct[1] * normal[1]));
+        float c = -(origin[2] * (origin[2] - center[2]) * normal[2] / ((direct[2] * normal[2]));
+
+	float tVals[3] = {a, b, c};
+*/
+	
+
+
+        float value =  -normal[0]*(origin[0] - center[0]) + normal[1]*(origin[1] - center[1]) + normal[2]*(origin[2] - center[2]); 
+                     // - (normal[0]*center[0]) - (normal[1]*center[1]) - (normal[2]*center[2])) 
+           value = value / ((normal[0]*direct[0]) + (normal[1]*direct[1]) + (normal[2]*direct[2]));
+
+//	float value = (normal[0]*(origin[0] - direct[0])
+	printf("\nValue: %f\n" , value);
         if (value > 0) {
             distance = value;
-        } 
+        }
+	else{
+	    distance = value * -1;
+	}
+
     }
 
     return distance;
@@ -123,14 +142,16 @@ void printObjects() {
 ///////////// RAYCAST /////////////////////////////
 void raycast(PPM *image){
     float xdist, ydist, zdist = -1;
-    float pixHeight = camHeight/image->height, pixWidth = camWidth/image->width;
-    for(int row = 0; row < image->height; row++){
 
-        xdist = origin[1] - camHeight / 2 + pixHeight * (row+0.5);
+    float pixHeight = camHeight/image->height, pixWidth = camWidth/image->width;
+
+    for(int row = 0; row < image->height; row++){
+	// CHANGED ORIGIN FROM 1 TO 0
+        xdist = origin[0] - (camHeight / 2) + (pixHeight * (row+0.5));
 
         for(int col = 0; col < image->width; col++){
-
-            ydist = origin[0] - camWidth / 2 + pixWidth *  (col+0.5);
+		// CHANGED ORIGIN FROM 0 TO 1
+            ydist = origin[1] - (camWidth / 2) + (pixWidth *  (col+0.5));
 
             float direct[3] = {xdist, ydist, zdist};
             v3_normalize(direct, direct);
@@ -138,22 +159,22 @@ void raycast(PPM *image){
             int nearObj = 0;
             float nearDist = INFINITY;
             for (int num = 0; num < numObjects; num++) {
-                float interectDist = intersection(direct, num);          
-                if (interectDist < nearDist) {
-                    nearDist = interectDist;
+                float intersectDist = intersection(direct, num);          
+                if (intersectDist < nearDist) {
+                    nearDist = intersectDist;
                     nearObj = num;
                 }
             }
-            int location = col*image->width*3+row*3;
+            int location = (col*(image->width)*3)+(row*3);
             if (nearDist != INFINITY) {
-                image->pixData[location] = objects[nearObj].color[0];
-                image->pixData[location+1] = objects[nearObj].color[1];
-                image->pixData[location+2] = objects[nearObj].color[2];
+                image->pixData[location] = objects[nearObj].color[0]*255;
+                image->pixData[location+1] = objects[nearObj].color[1]*255;
+                image->pixData[location+2] = objects[nearObj].color[2]*255;
             }
             else {
-                image->pixData[location] = backgroundColor[0];
-                image->pixData[location+1] = backgroundColor[1];
-                image->pixData[location+2] = backgroundColor[2];
+                image->pixData[location] = backgroundColor[0]*255;
+                image->pixData[location+1] = backgroundColor[1]*255;
+                image->pixData[location+2] = backgroundColor[2]*255;
             }
         }
     }
@@ -336,7 +357,8 @@ int main (int argc, char *argv[]) {
     image->height = height;
 
     raycast(image);
-    writeP6(image, output);
+    writeP3(image, output);
+    printf("\nOutput Image made\n");
     free(image);
     return(0);
 }
