@@ -4,6 +4,12 @@ float sqr(float value) {
     return value * value;
 }
 
+void setArray(float *dst, float *a) {
+    dst[0] = a[0];
+    dst[1] = a[1];
+    dst[2] = a[2];
+
+}
 void v3_from_points(float *dst, float *a, float *b) {
     dst[0] = b[0] - a[0];
     dst[1] = b[1] - a[1];

@@ -7,6 +7,7 @@ int CAMERA = 997;
 
 int numObjects = 0;
 float camWidth = 0, camHeight = 0;
+int MAX_COLOR = 1;
 
 float origin[3] = {0,0,0};
 float backgroundColor[3] = {0,0,0};
@@ -66,16 +67,16 @@ void getTuple(char str[], float *arr) {
 ///////////// INTERSECTION /////////////////////////////////
 float intersection(float *direct, int objNum) {
     float distance = INFINITY, value;
-    float center[3] = {objects[objNum].center[0], 
-                       objects[objNum].center[1], 
-                       objects[objNum].center[2]};
-    float oc[3] = {origin[0]-center[0], 
-                   origin[1]-center[1], 
-                   origin[2]-center[2]};
+    float temp[3] = {0,0,0};
+
+    v3_subtract(temp, origin, objects[objNum].center);
+
     if (objects[objNum].type == SPHERE) {
-        float b = 2 * (direct[0] * oc[0] + direct[1] * oc[1] + direct[2] * oc[2]);
-        float c = sqr(oc[0]) + sqr(oc[1]) + sqr(oc[2]) - sqr(objects[objNum].value.radius);
+
+        float b = 2 * v3_dot_product(direct, temp);
+        float c = sqr(temp[0]) + sqr(temp[1]) + sqr(temp[2]) - sqr(objects[objNum].value.radius);
         float discrim = sqr(b) - (4 * c);
+
         if (discrim > 0) {
             value = (b + sqrtf(discrim))/2;
             if (value > 0) {
@@ -84,27 +85,14 @@ float intersection(float *direct, int objNum) {
         }
     }
     else if (objects[objNum].type == PLANE) {
-        float normal[3] = {objects[objNum].value.normal[0], 
-                           objects[objNum].value.normal[1], 
-                           objects[objNum].value.normal[2]};
 
-/*
-        float a = -(origin[0] * (origin[0] - center[0]) * normal[0] / ((direct[0] * normal[0]));
-        float b = -(origin[1] * (origin[1] - center[1]) * normal[1] / ((direct[1] * normal[1]));
-        float c = -(origin[2] * (origin[2] - center[2]) * normal[2] / ((direct[2] * normal[2]));
+        v3_subtract(temp, origin, objects[objNum].center);
 
-	float tVals[3] = {a, b, c};
-*/
-	
+        value = v3_dot_product(temp, objects[objNum].value.normal);
+        float denominator = v3_dot_product(direct, objects[objNum].value.normal);
 
-
-        value =  -normal[0]*oc[0] + normal[1]*oc[1] + normal[2]*oc[2];
-
-        //	float value = (normal[0]*(origin[0] - direct[0])
-        value /= normal[0]*direct[0] + normal[1]*direct[1] + normal[2]*direct[2];
-	    printf("\nValue: %f\n" , value);
-        if (value > 0) {
-            distance = value;
+        if (value != 0 && denominator != 0 && -1 * value/denominator > 0) {
+            distance = -1*value/denominator;
         }
     }
     return distance;
@@ -138,11 +126,11 @@ void raycast(PPM *image){
     float pixHeight = camHeight/image->height, pixWidth = camWidth/image->width;
 
     for(int row = 0; row < image->height; row++){
-	// CHANGED ORIGIN FROM 1 TO 0
+
         xdist = origin[0] - (camHeight / 2) + (pixHeight * (row+0.5));
 
         for(int col = 0; col < image->width; col++){
-		// CHANGED ORIGIN FROM 0 TO 1
+
             ydist = origin[1] - (camWidth / 2) + (pixWidth *  (col+0.5));
 
             float direct[3] = {xdist-origin[0], ydist-origin[1], zdist-origin[2]};
@@ -157,16 +145,16 @@ void raycast(PPM *image){
                     nearObj = num;
                 }
             }
-            int location = (col*(image->width)*3)+(row*3);
+            int location = (col*image->width*3)+(row*3);
             if (nearDist != INFINITY) {
-                image->pixData[location] = objects[nearObj].color[0]*255;
-                image->pixData[location+1] = objects[nearObj].color[1]*255;
-                image->pixData[location+2] = objects[nearObj].color[2]*255;
+                image->pixData[location] = objects[nearObj].color[0];
+                image->pixData[location+1] = objects[nearObj].color[1];
+                image->pixData[location+2] = objects[nearObj].color[2];
             }
             else {
-                image->pixData[location] = backgroundColor[0]*255;
-                image->pixData[location+1] = backgroundColor[1]*255;
-                image->pixData[location+2] = backgroundColor[2]*255;
+                image->pixData[location] = backgroundColor[0];
+                image->pixData[location+1] = backgroundColor[1];
+                image->pixData[location+2] = backgroundColor[2];
             }
         }
     }
@@ -244,8 +232,6 @@ void setCamVal(char name[], char value[]) {
     }
 }
 
-
-
 ///////////// SETOBJNAME /////////////////////////////////
 int setObjName(char str[]) {
     if (strcmp(str, "camera") == 0) {
@@ -270,7 +256,7 @@ void setObjVal(char name[], char value[]) {
     if (strcmp(name, "color") == 0) {
         getTuple(value, array);
         for(int x = 0; x < 3; x++) {
-            if(array[x] <= 1 && array[x] >= 0) {
+            if(array[x] <= MAX_COLOR && array[x] >= 0) {
                 objects[numObjects].color[x] = array[x];
             }
             else {
@@ -280,9 +266,7 @@ void setObjVal(char name[], char value[]) {
     }
     else if (strcmp(name, "position") == 0) {
         getTuple(value, array);
-        objects[numObjects].center[0] = array[0];
-        objects[numObjects].center[1] = array[1];
-        objects[numObjects].center[2] = array[2];
+        setArray(objects[numObjects].center, array);
     }
     else if (strcmp(name, "radius") == 0) {
         if (atof(value) == 0) {
@@ -292,9 +276,7 @@ void setObjVal(char name[], char value[]) {
     }
     else if (strcmp(name, "normal") == 0) {
         getTuple(value, array);
-        objects[numObjects].value.normal[0] = array[0];
-        objects[numObjects].value.normal[1] = array[1];
-        objects[numObjects].value.normal[2] = array[2];
+        setArray(objects[numObjects].value.normal, array);
     }
     else {
         failure = true;
@@ -343,18 +325,19 @@ int main (int argc, char *argv[]) {
     if (camHeight == 0 || camWidth == 0 ) {
         fail("camera not properly set");
     }
-    printObjects(); //remove later
+    
+    //printObjects(); //remove later
 
     // create image
     PPM *image = (PPM*)malloc(sizeof(PPM));
     image->pixData = (unsigned char*)malloc(width*height*sizeof(Pixel)); 
-    image->maxColVal = 255;  
+    image->maxColVal = MAX_COLOR;  
     image->width = width;
     image->height = height;
 
     raycast(image);
     writeP3(image, output);
-    printf("\nCreated image %s\n", output);
+    printf("\nCreated image %s\n\n", output);
     free(image);
     return(0);
 }

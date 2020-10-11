@@ -12,6 +12,8 @@
 
 float sqr( float value);
 
+void setArray(float *dst, float *a);
+
 void v3_from_points (float *dst, float *a, float *b);
 
 void v3_add (float *dst, float *a, float *b);
