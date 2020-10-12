@@ -1,4 +1,4 @@
- # Project 3 - Raycaster
+ # Project 4 - Illumination
  
  ## Authors
      Brandon Measley: bcm223@nau.edu
