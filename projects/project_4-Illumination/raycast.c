@@ -67,7 +67,6 @@ void checkValue(char str[], float *arr) {
             }
         }
         if (counter != 2 && value[0] != '\0') {
-            printf("Str: %s\n", str);
             fail("Incorrect number of value in tuple for object");
         }
         else if (chars == strlen(str)) {
@@ -78,7 +77,7 @@ void checkValue(char str[], float *arr) {
 
 ///////////// INTERSECTION /////////////////////////////////
 float intersection(float *direct, int objNum) {
-    float distance = INFINITY, value;
+    float distance = INFINITY;
     float temp[3] = {0,0,0};
 
     v3_subtract(temp, origin, objects[objNum].position);
@@ -90,20 +89,24 @@ float intersection(float *direct, int objNum) {
         float discrim = sqr(b) - (4 * c);
 
         if (discrim > 0) {
-            value = (b + sqrtf(discrim))/2;
-            if (value > 0) {
-               distance = value;
+            float t0 = (b - sqrtf(discrim))/2;
+            float t1 = (b + sqrtf(discrim))/2;
+            if (t0 > 0 && t0 < t1) {
+                distance = t0;
             }
+            else if (t1 > 0) {
+                distance = t1;
+            }
+
         }
     }
     else if (objects[objNum].type == PLANE) {
 
-        v3_subtract(temp, origin, objects[objNum].position);
-        value = v3_dot_product(temp, objects[objNum].value.normal);
+        float numerator = v3_dot_product(temp, objects[objNum].value.normal);
         float denominator = v3_dot_product(direct, objects[objNum].value.normal);
 
-        if (value != 0 && denominator != 0 && -1 * value/denominator > 0) {
-            distance = -1*value/denominator;
+        if (numerator != 0 && denominator != 0 && -1 * numerator/denominator > 0) {
+            distance = -1*numerator/denominator;
         }
     }
     return distance;
@@ -144,19 +147,18 @@ void printObjects() {
 
 ///////////// RAYCAST /////////////////////////////
 void raycast(PPM *image){
-    float xdist, ydist, zdist = -1;
 
-    float pixHeight = camHeight/image->height, pixWidth = camWidth/image->width;
+    float pixHeight = camHeight/image->height;
+    float pixWidth = camWidth/image->width;
 
-    for(int row = 0; row < image->height; row++){
+    for(int row = 0; row < image->height; row++) {
 
-        xdist = origin[0] - (camHeight / 2) + (pixHeight * (row+0.5));
+        for(int col = 0; col < image->width; col++) {
 
-        for(int col = 0; col < image->width; col++){
+            float direct[3] = {origin[0] - (camHeight / 2) + (pixHeight * (row+0.5)),
+                               origin[1] - (camWidth / 2) + (pixWidth *  (col+0.5)),
+                               -1};
 
-            ydist = origin[1] - (camWidth / 2) + (pixWidth *  (col+0.5));
-
-            float direct[3] = {xdist-origin[0], ydist-origin[1], zdist-origin[2]};
             v3_normalize(direct, direct);
 
             int nearObj = 0;
@@ -167,6 +169,9 @@ void raycast(PPM *image){
                     nearDist = intersectDist;
                     nearObj = num;
                 }
+            }
+            for (int num = 0; num <= numLights; num++) {
+                //shade
             }
             int location = (col*image->width*3)+(row*3);
             if (nearDist != INFINITY) {
@@ -199,8 +204,7 @@ void readFile(char* filename) {
      int type = 0;
      while (curChar != EOF) {
          if (curChar == '\n') {
-             setValue(name, value, type);
-             
+             setValue(name, value, type);             
              curChar = tolower(getc(file));
              if (type == LIGHT && curChar != EOF) {
                  numLights++;
@@ -223,7 +227,7 @@ void readFile(char* filename) {
                  type = setType(name);
              }
              else {
-               setValue(name, value, type);
+                 setValue(name, value, type);
              }
              isName = resetValues(name, value);
          }
@@ -263,8 +267,10 @@ int setType(char str[]) {
 
 ///////////// SETVALUE /////////////////////////////////
 void setValue(char name[], char value[], int type) {
+
     float array[3] = {0,0,0};
     checkValue(value, array);
+
     // Set Camera value
     if (type == CAMERA) {
         if (strcmp(name, "width")) {
@@ -314,7 +320,6 @@ void setValue(char name[], char value[], int type) {
             fail("a value or name in an object is incorrect in the input file");
         }
     }
-
     // Set Object value
     else {
         if (isType(name, "color")) {
