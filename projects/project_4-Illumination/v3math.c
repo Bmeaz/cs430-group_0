@@ -67,9 +67,9 @@ void v3_reflect(float *dst, float *v, float *n) {
 
     for(int refIndex = 0; refIndex < 3; refIndex++){
         // Compute b at the start of the loop
-        float b = -(n[refIndex])*(v[refIndex]) * (n[refIndex]);
+        float b = -((n[refIndex])*(v[refIndex])) * (n[refIndex]);
         //Compute Vr by using previously calculated b
-        dst[refIndex] = v[refIndex] + 2*b;
+        dst[refIndex] = v[refIndex] + (2*b);
     }
 
 
