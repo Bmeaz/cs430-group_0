@@ -39,17 +39,18 @@ Light lights[128];
 // methods
 void checkValue(char str[], float *arr);
 void getDircetion(float *rayDirection, float x, float y, float z);
+void illuminate (float *color, float x, float y, float distance);
 float intersection(float *direct, int objNum);
 void printObjects();
 void raycast(PPM *image);
-bool resetValues (char* name, char* value);
-void readFile(char* filename);
-void setArray(float *dest, float *arr);
+bool resetValues (char *name, char *value);
+void readFile(char *filename);
+void setColor( float *array, float *color_vals);
 int setType(char str[]);
 void setValue(char name[], char value[], int type);
 
 
-///////////// GETTUPLE /////////////////////////////////
+///////////// CHECKVALUE /////////////////////////////////
 void checkValue(char str[], float *arr) {
     int counter = 0;
     char value[100];
@@ -74,6 +75,16 @@ void checkValue(char str[], float *arr) {
         }
     }
 }
+
+///////////// ILLUMINATE /////////////////////////////////
+//TODO:
+void illuminate (float *color, float x, float y, float distance) {
+    for(int num = 0; num < numLights; num++) {
+
+    }
+
+}
+
 
 ///////////// INTERSECTION /////////////////////////////////
 float intersection(float *direct, int objNum) {
@@ -147,9 +158,9 @@ void printObjects() {
 
 ///////////// RAYCAST /////////////////////////////
 void raycast(PPM *image){
-
     float pixHeight = camHeight/image->height;
     float pixWidth = camWidth/image->width;
+    float finalColor[3] = {0,0,0};
 
     for(int row = 0; row < image->height; row++) {
 
@@ -161,8 +172,12 @@ void raycast(PPM *image){
 
             v3_normalize(direct, direct);
 
+            int location = (col*image->width*3)+(row*3);
             int nearObj = 0;
             float nearDist = INFINITY;
+
+            setArray(finalColor, backgroundColor);
+
             for (int num = 0; num <= numObjects; num++) {
                 float intersectDist = intersection(direct, num);          
                 if (intersectDist < nearDist) {
@@ -170,19 +185,12 @@ void raycast(PPM *image){
                     nearObj = num;
                 }
             }
-            for (int num = 0; num <= numLights; num++) {
-                //shade
+            if (nearDist != INFINITY) { // set color to finalColor
+                setArray(finalColor, objects[nearObj].diffColor);
+                illuminate(finalColor, row, col, nearDist); 
             }
-            int location = (col*image->width*3)+(row*3);
-            if (nearDist != INFINITY) {
-                image->pixData[location] = objects[nearObj].diffColor[0];
-                image->pixData[location+1] = objects[nearObj].diffColor[1];
-                image->pixData[location+2] = objects[nearObj].diffColor[2];
-            }
-            else {
-                image->pixData[location] = backgroundColor[0];
-                image->pixData[location+1] = backgroundColor[1];
-                image->pixData[location+2] = backgroundColor[2];
+            for (int x = 0; x < 3; x++) { // set color to pixMap
+                image->pixData[location + x] = finalColor[x];
             }
         }
     }
@@ -245,6 +253,21 @@ void readFile(char* filename) {
      fclose(file);      
 } 
 
+///////////// SETCOLOR /////////////////////////////////
+void setColor( float* array, float *color_vals) {
+    for(int x = 0; x < 3; x++) {
+        if(array[x] > MAX_COLOR) {
+            array[x] = MAX_COLOR;
+        }
+        else if(array[x] < 0) {
+            array[x] = 0;
+        }
+        else {
+            array[x] = color_vals[x];
+       }
+    }
+}
+
 ///////////// SETTYPE /////////////////////////////////
 int setType(char str[]) {
     if (strcmp(str, "camera") == 0) {
@@ -286,14 +309,7 @@ void setValue(char name[], char value[], int type) {
     // Set Light value
     else if (type == LIGHT) {
         if (isType(name, "color")) {
-            for(int x = 0; x < 3; x++) {
-                if(array[x] <= MAX_COLOR && array[x] >= 0) {
-                    lights[numLights].color[x] = array[x];
-                }
-                else {
-                    fail("Incorrect color value for light");
-                }
-            }
+            setColor(lights[numLights].color, array); 
         }
         else if (strcmp(name, "position") == 0) {
             setArray(lights[numLights].position, array);
@@ -322,20 +338,11 @@ void setValue(char name[], char value[], int type) {
     }
     // Set Object value
     else {
-        if (isType(name, "color")) {
-            for(int x = 0; x < 3; x++) {
-                if(array[x] <= MAX_COLOR && array[x] >= 0) {
-                    if (strcmp(name, "diffuse_color") == 0) {
-                        objects[numObjects].diffColor[x] = array[x];
-                    }   
-                    else if (strcmp(name, "specular_color") == 0) {
-                        objects[numObjects].specColor[x] = array[x];
-                    }
-                }
-                else {
-                    fail("Incorrect color value for object");
-                }
-            }
+        if (strcmp(name, "diffuse_color") == 0) {
+            setColor(objects[numObjects].diffColor, array);
+        }    
+        else if (strcmp(name, "specular_color") == 0) {
+            setColor(objects[numObjects].specColor, array);
         }
         else if (strcmp(name, "position") == 0) {
             setArray(objects[numObjects].position, array);
@@ -346,8 +353,7 @@ void setValue(char name[], char value[], int type) {
         else if (strcmp(name, "normal") == 0) {
             setArray(objects[numObjects].value.normal, array);
         }
-        else {
-            
+        else {           
             fail("a value or name in an object is incorrect in the input file");
         }
     }
