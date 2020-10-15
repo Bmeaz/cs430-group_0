@@ -49,6 +49,10 @@ int setType(char str[]);
 void setValue(char name[], char value[], int type);
 
 
+static double p3_distance(double* a, double* b) {
+  return sqrt(sqr(b[0] - a[0]) + sqr(b[1] - a[1]) + sqr(b[2] - a[2]));
+
+
 void illuminate(int objNum, float* x, float* y, int *dest) {
   // initialize values for color, would be where ambient color goes
   double color[3];
