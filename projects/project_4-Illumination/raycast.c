@@ -75,14 +75,177 @@ void checkValue(char str[], float *arr) {
         }
     }
 }
+///////////// OBJ_COMPARE/////////////////////////////////
+// returns 1 if the physical objects are equal, 0 if not
+int obj_compare(Object a, Object b) {
+  if (a.type == b.type &&
+    equal(a.diffuseColor[0], b.diffuseColor[0]) &&
+    equal(a.diffuseColor[1], b.diffuseColor[1]) &&
+    equal(a.diffuseColor[2], b.diffuseColor[2]) &&
+    equal(a.specularColor[0], b.specularColor[0]) &&
+    equal(a.specularColor[1], b.specularColor[1]) &&
+    equal(a.specularColor[2], b.specularColor[2]) &&
+    equal(a.position[0], b.position[0]) &&
+    equal(a.position[1], b.position[1]) &&
+    equal(a.position[2], b.position[2])) {
+      if (a.type == 0 &&
+        equal(a.plane.normal[0], b.plane.normal[0]) &&
+        equal(a.plane.normal[1], b.plane.normal[1]) &&
+        equal(a.plane.normal[2], b.plane.normal[2])) {
+          return 1; // same plane object
+        }
+        else if (a.type == 1 &&
+          equal(a.sphere.radius, b.sphere.radius)) {
+      return 1; // same sphere object
+    }
+  }
+  return 0;
+}
+
+
+///////////// DIFFUSE_REFLECTION//////////////////////////
+// calculate diffuse reflection of the object
+double diffuse_reflection(double light.color, double diffColor, double diffactor) {
+  double diffactor = v3_dot(surfaceNormal, objToLight);
+  double specFactor = v3_dot(reflection, objToCam);
+
+  if (diffactor > 0) {
+    return diffuseIntensity * lightColor * diffColor * diffactor;
+  }
+  else {
+    return 0.0;
+  }
+}
+
+///////////// SPECULAR_REFLECTION/////////////////////////
+// calculate specular reflection of the object
+double specular_reflection(double light.color, double specColor, double diffactor, double specFactor) {
+  double diffactor = v3_dot(surfaceNormal, objToLight);
+  double specFactor = v3_dot(reflection, objToCam);
+
+  if (specFactor > 0 && diffactor > 0) {
+    return specularIntensity * light.Color * specColor * pow(specFactor, specularPower);
+  }
+  else {
+    return 0.0;
+  }
+}
 
 ///////////// ILLUMINATE /////////////////////////////////
-//TODO:
+
+/*//TODO:
 void illuminate (float *color, float x, float y, float distance) {
     for(int num = 0; num < numLights; num++) {
 
-    }
+    } COMMENTED THIS SECTION OUT WHILE I MERGE STEVE AND BRANDON
 
+}
+*/
+void illuminate(int objNum, float* x, float* y, int *dest) {
+  // initialize values for color, would be where ambient color goes
+  double color[3];
+
+  color[0] = ambientIntensity * ambience;
+  color[1] = ambientIntensity * ambience;
+  color[2] = ambientIntensity * ambience;
+
+  int kind = objNum.type;
+
+  double objOrigin[3]; // where the current object pixel is in space
+  v3_scale(x, objNum, object.position);
+  v3_add(object, y, object);
+
+
+  double* objToCam = malloc(3 * sizeof(double)); // vector from the object to the camera
+  v3_subtract(object.position, numObjects, CAMERA);
+  normalize(objToCam);
+
+  double* surfaceNormal = malloc(3 * sizeof(double));; // surface normal of the object
+  if (kind == 0) { // plane
+    surfaceNormal = object.plane.normal;
+  }
+  else { // sphere
+    v3_subtract(objNum, object.position, surfaceNormal);
+  }
+  normalize(surfaceNormal);
+
+  // loop through all the lights in the lights array
+  for (int i = 0; i < lights; i++) {
+
+    double lightToObj[3]; // ray from light towards the object
+    v3_scale(x, object, lightToObj);
+    v3_add(lightToObj, y, lightToObj);
+    v3_subtract(lightToObj, lights[i].position, lightToObj);
+    normalize(lightToObj);
+
+    double objToLight[3]; // ray from object towards the light
+    v3_subtract(lights[i].position, objNum, objToLight);
+    normalize(objToLight);
+
+    double* lightDirection = lights[i].color.direction;
+    normalize(lightDirection);
+
+    // reflection of the ray of light hitting the surface, symmetrical across the normal
+    double* reflection = malloc(3 * sizeof(double));
+    v3_scale(surfaceNormal, 2  * v3_dot(surfaceNormal, lightToObj), reflection);
+    v3_subtract(lightToObj, reflection, reflection);
+    normalize(reflection);
+
+    double diffactor = v3_dot(surfaceNormal, objToLight);
+    double specFactor = v3_dot(reflection, objToCam);
+
+    double lightDistance = p3_distance(lights[i].position, objNum); // distance from the light to the current pixel
+
+    int shadow = 0;
+    double currentT = 0.0;
+
+    for (int j = 0; j < objects[1]; j++) { // loop through all the objects in the array
+      Object currentObj = physicalObjects[j];
+
+      if (obj_compare(currentObj, colorObj)) {
+        continue; // skip over the object we are coloring
+      }
+
+      double* newObjOrigin = malloc(3 * sizeof(double));
+      v3_scale(objToLight, 0.0000001, newObjOrigin);
+      v3_add(newObjOrigin, objOrigin, newObjOrigin);
+
+      if (currentObj.type == 0) { // plane
+        currentT = intersection(newObjOrigin, objToLight, currentObj.position, currentObj.plane.normal);
+      }
+      else if (currentObj.type == 1) { // sphere
+        currentT = intersection(newObjOrigin, objToLight, currentObj.position, currentObj.sphere.radius);
+      }
+      else {
+        fprintf(stderr, "Unrecognized object.\n");
+        exit(1);
+      }
+
+      if (currentT <= lightDistance && currentT > 0 && currentT < INFINITY) {
+        shadow = 1;
+        break;
+      }
+    }
+    if (shadow == 0) { // */ // no shadow
+
+      double diffuse[3];
+      diffuse[0] = diffuse_reflection(lightObjects[i].color[0], colorObj.diffuseColor[0], diffactor);
+      diffuse[1] = diffuse_reflection(lightObjects[i].color[1], colorObj.diffuseColor[1], diffactor);
+      diffuse[2] = diffuse_reflection(lightObjects[i].color[2], colorObj.diffuseColor[2], diffactor);
+
+      double specular[3];
+      specular[0] = specular_reflection(lightObjects[i].color[0], colorObj.specularColor[0], diffactor, specFactor);
+      specular[1] = specular_reflection(lightObjects[i].color[1], colorObj.specularColor[1], diffactor, specFactor);
+      specular[2] = specular_reflection(lightObjects[i].color[2], colorObj.specularColor[2], diffactor, specFactor);
+
+      double fRad = frad(lightDistance, lightObjects[i].light.radA0, lightObjects[i].light.radA1, lightObjects[i].light.radA2);
+      double fAng = fang(lightObjects[i].light.angular, lightObjects[i].light.theta, lightToObj, lightDirection);
+
+      color[0] += fRad * fAng * (diffuse[0] + specular[0]);
+      color[1] += fRad * fAng * (diffuse[1] + specular[1]);
+      color[2] += fRad * fAng * (diffuse[2] + specular[2]);
+    }
+  }
 }
 
 
