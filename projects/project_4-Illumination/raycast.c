@@ -49,7 +49,7 @@ int setType(char str[]);
 void setValue(char name[], char value[], int type);
 
 
-static double p3_distance(double* a, double* b) {
+static double v3_distance(double* a, double* b) {
   return sqrt(sqr(b[0] - a[0]) + sqr(b[1] - a[1]) + sqr(b[2] - a[2]));
 
 
@@ -106,7 +106,7 @@ void illuminate(int objNum, float* x, float* y, int *dest) {
     double diffactor = v3_dot(surfaceNormal, objToLight);
     double specFactor = v3_dot(reflection, objToCam);
 
-    double lightDistance = p3_distance(lights[i].position, objNum); // distance from the light to the current pixel
+    double lightDistance = v3_distance(lights[i].position, objNum); // distance from the light to the current pixel
 
     int shadow = 0;
     double currentT = 0.0;
