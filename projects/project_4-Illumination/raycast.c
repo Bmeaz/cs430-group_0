@@ -8,16 +8,18 @@ int LIGHT = 996;
 
 int numObjects = 0, numLights = 0;
 float camWidth = 0, camHeight = 0;
-int MAX_COLOR = 1;
+int MAX_COLOR = 255;
+int ns = 20;
 
 float origin[3] = {0,0,0};
 float backgroundColor[3] = {0,0,0};
 
 typedef struct Light {
     float position[3], color[3];
-    float radA0, radA1, radA2;
+    float radA[3];
     float direction[3];
-    float theta, angular;
+    float cosTheta, angular;
+    bool isSpotLight;
 
 } Light;
 
@@ -37,18 +39,18 @@ Object objects[128];
 Light lights[128];
 
 // methods
-void checkValue(char str[], float *arr);
-void getDircetion(float *rayDirection, float x, float y, float z);
-void illuminate (float *color, float x, float y, float distance);
-float intersection(float *direct, int objNum);
-void printObjects();
-void raycast(PPM *image);
-bool resetValues (char *name, char *value);
-void readFile(char *filename);
-void setColor( float *array, float *color_vals);
-int setType(char str[]);
-void setValue(char name[], char value[], int type);
-
+void  checkValue(char str[], float *arr);
+float clamp (float color);
+void  getDircetion(float *rayDirection, float x, float y, float z);
+void illuminate(float *origin, float *direct, float *color, int objNum);
+float intersection(float *origin, float* direct, int objNum);
+void  printObjects();
+bool  resetValues (char *name, char *value);
+void  readFile(char *filename);
+int   setType(char str[]);
+void  setValue(char name[], char value[], int type);
+void  shoot(float *origin, float *direction, float *color, int recLevel);
+ 
 
 ///////////// CHECKVALUE /////////////////////////////////
 void checkValue(char str[], float *arr) {
@@ -75,182 +77,73 @@ void checkValue(char str[], float *arr) {
         }
     }
 }
-///////////// OBJ_COMPARE/////////////////////////////////
-// returns 1 if the physical objects are equal, 0 if not
-int obj_compare(Object a, Object b) {
-  if (a.type == b.type &&
-    equal(a.diffuseColor[0], b.diffuseColor[0]) &&
-    equal(a.diffuseColor[1], b.diffuseColor[1]) &&
-    equal(a.diffuseColor[2], b.diffuseColor[2]) &&
-    equal(a.specularColor[0], b.specularColor[0]) &&
-    equal(a.specularColor[1], b.specularColor[1]) &&
-    equal(a.specularColor[2], b.specularColor[2]) &&
-    equal(a.position[0], b.position[0]) &&
-    equal(a.position[1], b.position[1]) &&
-    equal(a.position[2], b.position[2])) {
-      if (a.type == 0 &&
-        equal(a.plane.normal[0], b.plane.normal[0]) &&
-        equal(a.plane.normal[1], b.plane.normal[1]) &&
-        equal(a.plane.normal[2], b.plane.normal[2])) {
-          return 1; // same plane object
+
+
+///////////// CLAMP /////////////////////////////////
+float clamp (float color) {
+    if(color > MAX_COLOR) {
+        color = MAX_COLOR;
+    }
+    else if(color < 0) {
+        color = 0;
+    }
+    return color;
+}
+
+void illuminate(float *origin, float *direct, float *color, int objNum) {
+    //I = sumation over all visable lights(radialt and angular)
+    float angA = 1.0;
+    float distance = intersection(origin, direct, objNum);
+    bool firstLight = true;
+    //float angA = distance * VLIGHT (VALUE OF THE VECTOR IN THE CENTER OF THE CONE)
+    for (int lightNum = 0; lightNum <= numLights; lightNum++) {
+        if (distance != INFINITY) {
+            float radA = 1 / (lights[lightNum].radA[0] + (lights[lightNum].radA[1] * distance) + (lights[lightNum].radA[2] * sqr(distance)));
+
+            if (lights[lightNum].isSpotLight) {
+                //TODO: angA = vobj * vlight (vObj = intersectionPoint - light position)
+			    angA = distance * lights[lightNum].cosTheta; //DONE?
+
+            if (angA < lights[lightNum].cosTheta) {
+                angA = 0;  
+            }
+         }
+
+            // Value N in the equations
+            //TODO: set surfNorm to correct value
+			if(objects[objNum].type = 0){
+           		float surfNorm[3] = {0,0,0};
+				setArray(objects[objNum].plane.normal, surfNorm); //DONE?
+				normalize(surfNorm);
+            }  
+            // Value L in equations
+            float lightVect[3] = {0,0,0};
+            get_light_vector(lightVect, origin, surfNorm);
+
+            // Value R in equations
+            float reflectVect[3] = {0,0,0};
+            v3_reflect(reflectVect, lightVect, surfNorm);
+
+            // Value V in equations
+            //TODO: set veiwVect to correct value,  I AM NOT SURE WHAT V IS IN TERMS OF THE PROJECT
+            float viewVect[3] = {0,0,0};
+
+
+            for (int x = 0; x < 3; x++) {
+                float diffuse = objects[objNum].diffColor[x] * (surfNorm[x] * lightVect[x]);
+                float specular = objects[objNum].specColor[x] * pow((reflectVect[x] * viewVect[x]), ns);
+                if (firstLight) {
+                    color[x] = 0;
+                    firstLight = false;
+                }
+                color[x] += (radA * angA * lights[lightNum].color[x] * (diffuse + specular));
+            }
         }
-        else if (a.type == 1 &&
-          equal(a.sphere.radius, b.sphere.radius)) {
-      return 1; // same sphere object
-    }
-  }
-  return 0;
+    }   
 }
-
-
-///////////// DIFFUSE_REFLECTION//////////////////////////
-// calculate diffuse reflection of the object
-double diffuse_reflection(double light.color, double diffColor, double diffactor) {
-  double diffactor = v3_dot(surfaceNormal, objToLight);
-  double specFactor = v3_dot(reflection, objToCam);
-
-  if (diffactor > 0) {
-    return diffuseIntensity * lightColor * diffColor * diffactor;
-  }
-  else {
-    return 0.0;
-  }
-}
-
-///////////// SPECULAR_REFLECTION/////////////////////////
-// calculate specular reflection of the object
-double specular_reflection(double light.color, double specColor, double diffactor, double specFactor) {
-  double diffactor = v3_dot(surfaceNormal, objToLight);
-  double specFactor = v3_dot(reflection, objToCam);
-
-  if (specFactor > 0 && diffactor > 0) {
-    return specularIntensity * light.Color * specColor * pow(specFactor, specularPower);
-  }
-  else {
-    return 0.0;
-  }
-}
-
-///////////// ILLUMINATE /////////////////////////////////
-
-/*//TODO:
-void illuminate (float *color, float x, float y, float distance) {
-    for(int num = 0; num < numLights; num++) {
-
-    } COMMENTED THIS SECTION OUT WHILE I MERGE STEVE AND BRANDON
-
-}
-*/
-void illuminate(int objNum, float* x, float* y, int *dest) {
-  // initialize values for color, would be where ambient color goes
-  double color[3];
-
-  color[0] = ambientIntensity * ambience;
-  color[1] = ambientIntensity * ambience;
-  color[2] = ambientIntensity * ambience;
-
-  int kind = objNum.type;
-
-  double objOrigin[3]; // where the current object pixel is in space
-  v3_scale(x, objNum, object.position);
-  v3_add(object, y, object);
-
-
-  double* objToCam = malloc(3 * sizeof(double)); // vector from the object to the camera
-  v3_subtract(object.position, numObjects, CAMERA);
-  normalize(objToCam);
-
-  double* surfaceNormal = malloc(3 * sizeof(double));; // surface normal of the object
-  if (kind == 0) { // plane
-    surfaceNormal = object.plane.normal;
-  }
-  else { // sphere
-    v3_subtract(objNum, object.position, surfaceNormal);
-  }
-  normalize(surfaceNormal);
-
-  // loop through all the lights in the lights array
-  for (int i = 0; i < lights; i++) {
-
-    double lightToObj[3]; // ray from light towards the object
-    v3_scale(x, object, lightToObj);
-    v3_add(lightToObj, y, lightToObj);
-    v3_subtract(lightToObj, lights[i].position, lightToObj);
-    normalize(lightToObj);
-
-    double objToLight[3]; // ray from object towards the light
-    v3_subtract(lights[i].position, objNum, objToLight);
-    normalize(objToLight);
-
-    double* lightDirection = lights[i].color.direction;
-    normalize(lightDirection);
-
-    // reflection of the ray of light hitting the surface, symmetrical across the normal
-    double* reflection = malloc(3 * sizeof(double));
-    v3_scale(surfaceNormal, 2  * v3_dot(surfaceNormal, lightToObj), reflection);
-    v3_subtract(lightToObj, reflection, reflection);
-    normalize(reflection);
-
-    double diffactor = v3_dot(surfaceNormal, objToLight);
-    double specFactor = v3_dot(reflection, objToCam);
-
-    double lightDistance = p3_distance(lights[i].position, objNum); // distance from the light to the current pixel
-
-    int shadow = 0;
-    double currentT = 0.0;
-
-    for (int j = 0; j < objects[1]; j++) { // loop through all the objects in the array
-      Object currentObj = physicalObjects[j];
-
-      if (obj_compare(currentObj, colorObj)) {
-        continue; // skip over the object we are coloring
-      }
-
-      double* newObjOrigin = malloc(3 * sizeof(double));
-      v3_scale(objToLight, 0.0000001, newObjOrigin);
-      v3_add(newObjOrigin, objOrigin, newObjOrigin);
-
-      if (currentObj.type == 0) { // plane
-        currentT = intersection(newObjOrigin, objToLight, currentObj.position, currentObj.plane.normal);
-      }
-      else if (currentObj.type == 1) { // sphere
-        currentT = intersection(newObjOrigin, objToLight, currentObj.position, currentObj.sphere.radius);
-      }
-      else {
-        fprintf(stderr, "Unrecognized object.\n");
-        exit(1);
-      }
-
-      if (currentT <= lightDistance && currentT > 0 && currentT < INFINITY) {
-        shadow = 1;
-        break;
-      }
-    }
-    if (shadow == 0) { // */ // no shadow
-
-      double diffuse[3];
-      diffuse[0] = diffuse_reflection(lightObjects[i].color[0], colorObj.diffuseColor[0], diffactor);
-      diffuse[1] = diffuse_reflection(lightObjects[i].color[1], colorObj.diffuseColor[1], diffactor);
-      diffuse[2] = diffuse_reflection(lightObjects[i].color[2], colorObj.diffuseColor[2], diffactor);
-
-      double specular[3];
-      specular[0] = specular_reflection(lightObjects[i].color[0], colorObj.specularColor[0], diffactor, specFactor);
-      specular[1] = specular_reflection(lightObjects[i].color[1], colorObj.specularColor[1], diffactor, specFactor);
-      specular[2] = specular_reflection(lightObjects[i].color[2], colorObj.specularColor[2], diffactor, specFactor);
-
-      double fRad = frad(lightDistance, lightObjects[i].light.radA0, lightObjects[i].light.radA1, lightObjects[i].light.radA2);
-      double fAng = fang(lightObjects[i].light.angular, lightObjects[i].light.theta, lightToObj, lightDirection);
-
-      color[0] += fRad * fAng * (diffuse[0] + specular[0]);
-      color[1] += fRad * fAng * (diffuse[1] + specular[1]);
-      color[2] += fRad * fAng * (diffuse[2] + specular[2]);
-    }
-  }
-}
-
 
 ///////////// INTERSECTION /////////////////////////////////
-float intersection(float *direct, int objNum) {
+float intersection(float *origin, float* direct, int objNum) {
     float distance = INFINITY;
     float temp[3] = {0,0,0};
 
@@ -292,13 +185,18 @@ float intersection(float *direct, int objNum) {
 void printObjects() {
     printf("Camera values:\n\tWidth = %f\n\tHeight = %f\n", camWidth, camHeight);
     for( int x = 0; x <= numLights; x++ ) {
-        printf("\nLight Found:\n");
+        if(lights[x].isSpotLight) {
+            printf("\nSpotLight Found:\n");
+        }
+        else {
+            printf("\nLight Found:\n");
+        }
         printf("\tposition = %f, %f, %f\n", lights[x].position[0], lights[x].position[1], lights[x].position[2]);
         printf("\tcolor = %f, %f, %f\n", lights[x].color[0], lights[x].color[1], lights[x].color[2]);
-        printf("\tradial a0 = %f\n", lights[x].radA0);
-        printf("\t\ta1 = %f\n", lights[x].radA1);
-        printf("\t\ta2 = %f\n", lights[x].radA2);
-        printf("\ttheta = %f\n", lights[x].theta);
+        printf("\tradial a0 = %f\n", lights[x].radA[0]);
+        printf("\t\ta1 = %f\n", lights[x].radA[1]);
+        printf("\t\ta2 = %f\n", lights[x].radA[2]);
+        printf("\tCos theta = %f\n", lights[x].cosTheta);
         printf("\tangular-a0 = %f\n", lights[x].angular);
         printf("\tdirection = %f, %f, %f\n", lights[x].direction[0], lights[x].direction[1], lights[x].direction[2]);
     }
@@ -319,46 +217,6 @@ void printObjects() {
     }
 } 
 
-///////////// RAYCAST /////////////////////////////
-void raycast(PPM *image){
-    float pixHeight = camHeight/image->height;
-    float pixWidth = camWidth/image->width;
-    float finalColor[3] = {0,0,0};
-
-    for(int row = 0; row < image->height; row++) {
-
-        for(int col = 0; col < image->width; col++) {
-
-            float direct[3] = {origin[0] - (camHeight / 2) + (pixHeight * (row+0.5)),
-                               origin[1] - (camWidth / 2) + (pixWidth *  (col+0.5)),
-                               -1};
-
-            v3_normalize(direct, direct);
-
-            int location = (col*image->width*3)+(row*3);
-            int nearObj = 0;
-            float nearDist = INFINITY;
-
-            setArray(finalColor, backgroundColor);
-
-            for (int num = 0; num <= numObjects; num++) {
-                float intersectDist = intersection(direct, num);          
-                if (intersectDist < nearDist) {
-                    nearDist = intersectDist;
-                    nearObj = num;
-                }
-            }
-            if (nearDist != INFINITY) { // set color to finalColor
-                setArray(finalColor, objects[nearObj].diffColor);
-                illuminate(finalColor, row, col, nearDist); 
-            }
-            for (int x = 0; x < 3; x++) { // set color to pixMap
-                image->pixData[location + x] = finalColor[x];
-            }
-        }
-    }
-}
-
 ///////////// RESETVALUES /////////////////////////////////
 bool resetValues (char* name, char* value) {
     name[0] = '\0';
@@ -378,6 +236,9 @@ void readFile(char* filename) {
              setValue(name, value, type);             
              curChar = tolower(getc(file));
              if (type == LIGHT && curChar != EOF) {
+                 if (lights[numLights].angular != 0) {
+                    lights[numLights].isSpotLight = true;
+                 }
                  numLights++;
              }
              else if (type != CAMERA && curChar != EOF) {
@@ -415,21 +276,6 @@ void readFile(char* filename) {
      } 
      fclose(file);      
 } 
-
-///////////// SETCOLOR /////////////////////////////////
-void setColor( float* array, float *color_vals) {
-    for(int x = 0; x < 3; x++) {
-        if(array[x] > MAX_COLOR) {
-            array[x] = MAX_COLOR;
-        }
-        else if(array[x] < 0) {
-            array[x] = 0;
-        }
-        else {
-            array[x] = color_vals[x];
-       }
-    }
-}
 
 ///////////// SETTYPE /////////////////////////////////
 int setType(char str[]) {
@@ -472,22 +318,22 @@ void setValue(char name[], char value[], int type) {
     // Set Light value
     else if (type == LIGHT) {
         if (isType(name, "color")) {
-            setColor(lights[numLights].color, array); 
+            setArray(lights[numLights].color, array); 
         }
         else if (strcmp(name, "position") == 0) {
             setArray(lights[numLights].position, array);
         }
         else if (strcmp(name, "theta") == 0) {
-            lights[numLights].theta = atof(value);
+            lights[numLights].cosTheta = acosf(atof(value));
         }
         else if (strcmp(name, "radial-a0") == 0) {
-            lights[numLights].radA0 = atof(value);
+            lights[numLights].radA[0] = atof(value);
         }
         else if (strcmp(name, "radial-a1") == 0) {
-            lights[numLights].radA1 = atof(value);
+            lights[numLights].radA[1] = atof(value);
         }
         else if (strcmp(name, "radial-a2") == 0) {
-            lights[numLights].radA2 = atof(value);
+            lights[numLights].radA[2] = atof(value);
         }
         else if (strcmp(name, "angular-a0") == 0) {
             lights[numLights].angular = atof(value);
@@ -502,10 +348,10 @@ void setValue(char name[], char value[], int type) {
     // Set Object value
     else {
         if (strcmp(name, "diffuse_color") == 0) {
-            setColor(objects[numObjects].diffColor, array);
+            setArray(objects[numObjects].diffColor, array);
         }    
         else if (strcmp(name, "specular_color") == 0) {
-            setColor(objects[numObjects].specColor, array);
+            setArray(objects[numObjects].specColor, array);
         }
         else if (strcmp(name, "position") == 0) {
             setArray(objects[numObjects].position, array);
@@ -520,6 +366,44 @@ void setValue(char name[], char value[], int type) {
             fail("a value or name in an object is incorrect in the input file");
         }
     }
+}
+
+///////////// SHOOT /////////////////////////////////
+void shoot(float *origin, float *direction, float *color, int recLevel) {
+    if (recLevel == 0) {
+        return;
+    }
+    int nearObj = 0;
+    float nearDist = INFINITY;
+    for (int num = 0; num <= numObjects; num++) {
+        float intersectDist = intersection(origin, direction, num);          
+        if (intersectDist < nearDist) {
+            nearDist = intersectDist;
+            nearObj = num;
+        }
+    }
+    if (nearDist == INFINITY) {
+        return;
+    }
+    /* Project 5 
+
+    if (objects[nearObj].reflect > 0) {
+        // set new ro at intersection and rd which is the reflection vector
+        shoot(Ro, Rd, reflectionColor, recLevel - 1);
+    }
+    if (objects[nearObj].refract > 0) {
+        // set new ro at intersection and rd which is the refraction vector
+        shoot(Ro, Rd, refractionColor, recLevel - 1);
+    }
+    assert(objects[nearObj].reflect + objects[nearObj].refract <= 1);
+    float opacity = 1 - objects[nearObj].reflect - objects[nearObj].reflect;
+    if (opacity > 0) { 
+    */
+
+
+    //TODO: ensure correct parameters, origin should be the point of intersection with object
+    //      direction should be ray direction towards the light
+    illuminate(direction, direction , color, nearObj);
 }
 
 /////////////   MAIN  ///////////////////////////////
@@ -561,7 +445,7 @@ int main (int argc, char *argv[]) {
         fail("camera not properly set");
     }
     
-    printObjects(); //remove later
+    //printObjects(); //remove later
 
     // create image
     PPM *image = (PPM*)malloc(sizeof(PPM));
@@ -570,7 +454,31 @@ int main (int argc, char *argv[]) {
     image->width = width;
     image->height = height;
 
-    raycast(image);
+    float pixHeight = camHeight/image->height;
+    float pixWidth = camWidth/image->width;
+    float finalColor[3] = {0,0,0}, rayOrigin[3] = {0,0,0};
+
+    for(int row = 0; row < image->height; row++) {
+
+        for(int col = 0; col < image->width; col++) {
+
+            float direct[3] = {origin[0] - (camHeight / 2) + (pixHeight * (row+0.5)),
+                               origin[1] - (camWidth / 2) + (pixWidth *  (col+0.5)),
+                               -1};
+
+            v3_normalize(direct, direct); 
+
+            setArray(finalColor, backgroundColor);
+            setArray(rayOrigin, origin);
+            shoot(rayOrigin, direct, finalColor, 7); 
+            
+            int location = (col*image->width*3)+(row*3);
+            for (int x = 0; x < 3; x++) { // set color to pixMap
+                image->pixData[location + x] = clamp(finalColor[x] * MAX_COLOR);
+            }
+        }
+    }
+
     writeP3(image, output);
     printf("\nCreated image %s\n\n", output);
     free(image);
