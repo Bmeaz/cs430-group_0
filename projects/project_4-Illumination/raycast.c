@@ -111,7 +111,6 @@ void illuminate(float *origin, float *direction, float *color, int lightNum) {
         float vObj[3] = {0,0,0};
         v3_subtract(vObj, origin, lights[lightNum].position);
         angA = pow(v3_dot_product(vObj, lights[lightNum].direction), lights[lightNum].angular);
-
         if (angA < lights[lightNum].cosTheta) {
             angA = 0;  
         }
@@ -124,11 +123,9 @@ void illuminate(float *origin, float *direction, float *color, int lightNum) {
                  
     }
     else if (objects[objNum].type == SPHERE) {
-        //TODO: set surfNorm to correct value for sphere
-        setArray(surfNorm, objects[objNum].position);  
-    }
-    
-     v3_normalize(surfNorm, surfNorm);
+        v3_subtract(surfNorm, origin, objects[objNum].position);  
+    }  
+    v3_normalize(surfNorm, surfNorm);
 
     // Value L in equations
     float lightVect[3] = {0,0,0};
