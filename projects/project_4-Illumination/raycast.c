@@ -102,18 +102,21 @@ void illuminate(float *origin, float *direct, float *color, int objNum) {
 
             if (lights[lightNum].isSpotLight) {
                 //TODO: angA = vobj * vlight (vObj = intersectionPoint - light position)
-			    angA = distance * lights[lightNum].cosTheta; //DONE?
+			    float vObj[3] = {0,0,0};
+ 				vObj = v3_subtract(vObj, origin, lights[lightNum].position);
+				angA = pow(v3_dot_product(vObj, lights[lightNum].direction), lights[lightNum].angular);
 
-            if (angA < lights[lightNum].cosTheta) {
+            if (angA < lights[lightNum].cosTheta) 
                 angA = 0;  
             }
          }
 
             // Value N in the equations
             //TODO: set surfNorm to correct value
-			if(objects[objNum].type = 0){
-           		float surfNorm[3] = {0,0,0};
-				setArray(objects[objNum].plane.normal, surfNorm); //DONE?
+          	float surfNorm[3] = {0,0,0};
+			if(objects[objNum].type = PLANE){
+ 
+				setArray(objects[objNum].value.normal, surfNorm); //DONE?
 				normalize(surfNorm);
             }  
             // Value L in equations
