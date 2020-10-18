@@ -2,6 +2,18 @@
 
 const int FORMS[] = {3, 6};   // Vaild types of forms accepted
 
+///////////// CLAMP /////////////////////////////////
+float clamp (float color, int max) {
+    if(color > max) {
+        color = max;
+    }
+    else if(color < 0) {
+        color = 0;
+    }
+    return color;
+}
+
+
 ////////////////////////////   fail  /////////////////////////////
 void fail (char *errMsg) {
     fprintf(stderr, "\nError: %s\n\n", errMsg);
