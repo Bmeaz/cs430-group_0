@@ -25,6 +25,8 @@ typedef struct Pixel {
 } Pixel;
 
 
+float clamp (float color, int max);
+
 void fail (char *errMsg);
 
 bool fileExists (char *filename);
