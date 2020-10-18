@@ -108,7 +108,10 @@ void illuminate(float *origin, float *direction, float *color, int lightNum) {
     float radA = 1 / denom;
 
     if (lights[lightNum].isSpotLight) {
-        //TODO: angA = vobj * vlight
+        float vObj[3] = {0,0,0};
+        v3_subtract(vObj, origin, lights[lightNum].position);
+        angA = pow(v3_dot_product(vObj, lights[lightNum].direction), lights[lightNum].angular);
+
         if (angA < lights[lightNum].cosTheta) {
             angA = 0;  
         }
