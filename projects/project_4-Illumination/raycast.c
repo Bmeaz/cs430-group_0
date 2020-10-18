@@ -95,29 +95,31 @@ void illuminate(float *origin, float *direct, float *color, int objNum) {
     float angA = 1.0;
     float distance = intersection(origin, direct, objNum);
     bool firstLight = true;
+	float radA;
     //float angA = distance * VLIGHT (VALUE OF THE VECTOR IN THE CENTER OF THE CONE)
     for (int lightNum = 0; lightNum <= numLights; lightNum++) {
-        if (distance != INFINITY) {
-            float radA = 1 / (lights[lightNum].radA[0] + (lights[lightNum].radA[1] * distance) + (lights[lightNum].radA[2] * sqr(distance)));
+        if (distance == INFINITY) {
+			return ;
+		}
+            radA = 1 / (lights[lightNum].radA[0] + (lights[lightNum].radA[1] * distance) + (lights[lightNum].radA[2] * sqr(distance)));
 
             if (lights[lightNum].isSpotLight) {
                 //TODO: angA = vobj * vlight (vObj = intersectionPoint - light position)
 			    float vObj[3] = {0,0,0};
- 				vObj = v3_subtract(vObj, origin, lights[lightNum].position);
+ 				v3_subtract(vObj, origin, lights[lightNum].position);
 				angA = pow(v3_dot_product(vObj, lights[lightNum].direction), lights[lightNum].angular);
-
-            if (angA < lights[lightNum].cosTheta) 
+			}
+            if (angA < lights[lightNum].cosTheta){
                 angA = 0;  
             }
-         }
 
             // Value N in the equations
             //TODO: set surfNorm to correct value
           	float surfNorm[3] = {0,0,0};
-			if(objects[objNum].type = PLANE){
+			if(objects[objNum].type == PLANE){
  
 				setArray(objects[objNum].value.normal, surfNorm); //DONE?
-				normalize(surfNorm);
+				v3_normalize(surfNorm, surfNorm);
             }  
             // Value L in equations
             float lightVect[3] = {0,0,0};
@@ -141,9 +143,9 @@ void illuminate(float *origin, float *direct, float *color, int objNum) {
                 }
                 color[x] += (radA * angA * lights[lightNum].color[x] * (diffuse + specular));
             }
-        }
-    }   
-}
+        
+    }   // For Loop
+} // Function brace
 
 ///////////// INTERSECTION /////////////////////////////////
 float intersection(float *origin, float* direct, int objNum) {
