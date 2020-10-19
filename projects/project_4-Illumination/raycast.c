@@ -93,14 +93,13 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
         }
     }
 
-    float objDistance = INFINITY;
+    float objDistance = lightDistance;
     float currentDistance;
     // loop through all objects
     for (int curObj = 0; curObj <= numObjects; curObj++) {
-        // skip current object
         if (curObj != objNum) {       
             if (objects[curObj].type == PLANE) {
-                currentDistance = planeIntersection(origin, direction, objects[curObj].position, objects[curObj].value.normal);
+                currentDistance = planeIntersection(origin, direction, objects[curObj].position, objects[curObj].value.normal);             
             }       
             else {
                 currentDistance = sphereIntersection(origin, direction, objects[curObj].position, objects[curObj].value.radius);
@@ -108,7 +107,7 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
             if (currentDistance < objDistance && currentDistance > 0) {
                 objDistance = currentDistance;
             }
-            if (abs(objDistance - lightDistance) < 0.00000001) {
+            if (fabs(objDistance - lightDistance) < 0.00000001) {
 
                 // Value N in the equations
                 float surfNorm[3] = {0,0,0};
@@ -123,28 +122,30 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
                 // Value L in equations
                 float lightVect[3] = {0,0,0};
                 setArray(lightVect, direction);
-                v3_normalize(lightVect, lightVect);
 
                 // Value R in equations
                 float reflectVect[3] = {0,0,0};
                 for (int a = 0; a < 3; a++) {
-                    reflectVect[a] = 2 * surfNorm[a] * v3_dot_product(surfNorm, lightVect) - lightVect[a];
+                    reflectVect[a] = direction[a] - (2  * v3_dot_product(surfNorm, direction) * surfNorm[a]);
                 }
 
                 // Value V in equations
                 float viewVect[3] = {0,0,0};
                 setArray(viewVect, direction);
                 v3_scale(viewVect, -1);
-
                 for (int x = 0; x < 3; x++) {
-                    float diffDotProd = surfNorm[x] * lightVect[x];
-                    float specDotProd = reflectVect[x] * viewVect[x];
-                    if (diffDotProd >= 0 && specDotProd >= 0) {
+                    float diffDotProd = fabs(surfNorm[x] * lightVect[x]);
+                    float specDotProd = fabs(reflectVect[x] * viewVect[x]);
+                    if (diffDotProd != 0 && specDotProd != 0) {
                             float diffuse = objects[objNum].diffColor[x] * lights[lightNum].color[x] * diffDotProd;
                             float specular = objects[objNum].specColor[x] * lights[lightNum].color[x] * pow(specDotProd, ns);
+                     //                       if (objects[objNum].type == SPHERE) {
+                    //printf("CradA: %f, angA:%f, diff: %f. spec:%f, total= %f\n", radA, angA, diffuse, specular,  radA * angA * (diffuse + specular)); }
                             color[x] += radA * angA * (diffuse + specular);
                     }
-                }  
+                } 
+                //if (objects[objNum].type == SPHERE) {
+                //    printf("Colors  of circle: %f, %f, %f\n", color[0], color[1], color[2]);  }
             }
         }
     }   
@@ -154,7 +155,6 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
 float planeIntersection(float *origin, float* direction, float* center, float* normal) {
     float numerator = -(v3_dot_product(normal, center));
     float denominator = v3_dot_product(normal, direction);
-
     if (numerator != 0 && denominator != 0 && -1 * numerator/denominator > 0) {
         return -(v3_dot_product(normal, origin) + numerator)/denominator;
     }
@@ -370,7 +370,6 @@ float sphereIntersection(float *origin, float* direction, float* center, float r
         }
         else if (t1 > 0) {
             distance = t1;
-
         }
     }
     return distance;
@@ -397,7 +396,7 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
             nearObj = num;
         }
     }
-    if (distance == INFINITY) {
+    if (distance == INFINITY) {  
         return;
     }
 
@@ -416,16 +415,14 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     if (opacity > 0) { 
     */
 
-
-    //TODO: ensure correct parameters, origin should be the point of intersection with object
-    //      direction should be ray direction towards the light
     for (int lightNum = 0; lightNum <= numLights; lightNum++) {
         // new origin
-        v3_add(origin, origin, direction);
+        setArray(origin, direction);
         v3_scale(origin, distance);
 
         // new direction
         v3_subtract(direction, lights[lightNum].position, origin);
+        v3_normalize(direction, direction);
 
         illuminate(origin, direction, color, nearObj, lightNum);
     }
