@@ -38,7 +38,7 @@ Light lights[128];
 
 // methods
 void  checkValue(char str[], float *arr);
-void illuminate(float *origin, float *direction, float *color, float distance, int objNum, int lightNum);
+void illuminate(float *origin, float *direction, float *color, int objNum, int lightNum);
 float planeIntersection(float *origin, float* direction, float* center, float* normal);
 void  printObjects();
 bool  resetValues (char *name, char *value);
@@ -76,7 +76,7 @@ void checkValue(char str[], float *arr) {
 }
 
 ///////////// ILLUMINATION /////////////////////////////////
-void illuminate(float *origin, float *direction, float *color, float distance, int objNum, int lightNum) {
+void illuminate(float *origin, float *direction, float *color, int objNum, int lightNum) {
    
     // set radial attinuation
     float lightDistance = sqrtf(sqr(direction[0]) + sqr(direction[1]) + sqr(direction[2]));
@@ -427,7 +427,7 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
         // new direction
         v3_subtract(direction, lights[lightNum].position, origin);
 
-        illuminate(origin, direction, color, distance, nearObj, lightNum);
+        illuminate(origin, direction, color, nearObj, lightNum);
     }
 }
 
