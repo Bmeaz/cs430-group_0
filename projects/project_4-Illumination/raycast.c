@@ -120,7 +120,11 @@ void illuminate(float *origin, float *direct, float *color, int objNum) {
  
 				setArray(objects[objNum].value.normal, surfNorm); //DONE?
 				v3_normalize(surfNorm, surfNorm);
-            }  
+            }
+			if(objects[objNum].type == SPHERE){
+				// Intersection point - center of sphere
+				v3_subtract(surfNorm, origin, objects[objNum].position);
+			}
             // Value L in equations
             float lightVect[3] = {0,0,0};
             get_light_vector(lightVect, origin, surfNorm);
@@ -130,8 +134,9 @@ void illuminate(float *origin, float *direct, float *color, int objNum) {
             v3_reflect(reflectVect, lightVect, surfNorm);
 
             // Value V in equations
-            //TODO: set veiwVect to correct value,  I AM NOT SURE WHAT V IS IN TERMS OF THE PROJECT
+            //TODO: set viewVect to correct value,  I AM NOT SURE WHAT V IS IN TERMS OF THE PROJECT
             float viewVect[3] = {0,0,0};
+			v3_normalize(viewVect, lights[lightNum].direction);
 
 
             for (int x = 0; x < 3; x++) {
