@@ -136,7 +136,7 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
                 for (int x = 0; x < 3; x++) {
                     float diffDotProd = fabs(surfNorm[x] * lightVect[x]);
                     float specDotProd = fabs(reflectVect[x] * viewVect[x]);
-                    if (diffDotProd <= 0 && specDotProd <= 0) {
+                    if (diffDotProd != 0 && specDotProd != 0) {
                             float diffuse = objects[objNum].diffColor[x] * lights[lightNum].color[x] * diffDotProd;
                             float specular = objects[objNum].specColor[x] * lights[lightNum].color[x] * pow(specDotProd, ns);
                             color[x] += radA * angA * (diffuse + specular);
