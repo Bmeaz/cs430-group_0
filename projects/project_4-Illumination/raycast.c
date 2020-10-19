@@ -136,16 +136,12 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
                 for (int x = 0; x < 3; x++) {
                     float diffDotProd = fabs(surfNorm[x] * lightVect[x]);
                     float specDotProd = fabs(reflectVect[x] * viewVect[x]);
-                    if (diffDotProd != 0 && specDotProd != 0) {
+                    if (diffDotProd <= 0 && specDotProd <= 0) {
                             float diffuse = objects[objNum].diffColor[x] * lights[lightNum].color[x] * diffDotProd;
                             float specular = objects[objNum].specColor[x] * lights[lightNum].color[x] * pow(specDotProd, ns);
-                     //                       if (objects[objNum].type == SPHERE) {
-                    //printf("CradA: %f, angA:%f, diff: %f. spec:%f, total= %f\n", radA, angA, diffuse, specular,  radA * angA * (diffuse + specular)); }
                             color[x] += radA * angA * (diffuse + specular);
                     }
                 } 
-                //if (objects[objNum].type == SPHERE) {
-                //    printf("Colors  of circle: %f, %f, %f\n", color[0], color[1], color[2]);  }
             }
         }
     }   
