@@ -38,8 +38,7 @@ Light lights[128];
 
 // methods
 void  checkValue(char str[], float *arr);
-float getDistance(float *origin, float *direction, int *nearObj);
-void  illuminate(float *origin, float *direction, float *color, int objNum);
+void illuminate(float *origin, float *direction, float *color, float distance, int objNum, int lightNum);
 float planeIntersection(float *origin, float* direction, float* center, float* normal);
 void  printObjects();
 bool  resetValues (char *name, char *value);
@@ -76,74 +75,78 @@ void checkValue(char str[], float *arr) {
     }
 }
 
-///////////// GETDISTANCE /////////////////////////////////
-float getDistance(float *origin, float *direction, int *nearObj) {
-    float distance = INFINITY;
-    float intersectDist;
-    for (int num = 0; num <= numObjects; num++) {
-        if (objects[num].type == PLANE) {
-            intersectDist = planeIntersection(origin, direction, objects[num].position, objects[num].value.normal);
-        }       
-        else {
-            intersectDist = sphereIntersection(origin, direction, objects[num].position, objects[num].value.radius);
-        }
-        if (intersectDist < distance) {
-            distance = intersectDist;
-            *nearObj = num;
-        }
-    }
-    return distance;
-}
-
 ///////////// ILLUMINATION /////////////////////////////////
-void illuminate(float *origin, float *direction, float *color, int lightNum) {
-    float angA = 1.0;
-    int objNum = 0;
-    float distance = getDistance(origin, direction, &objNum);
-    if (distance == INFINITY) {
-        return;
-    }
-    float denom = lights[lightNum].radA[0] + (lights[lightNum].radA[1] * distance) + (lights[lightNum].radA[2] * sqr(distance));
+void illuminate(float *origin, float *direction, float *color, float distance, int objNum, int lightNum) {
+   
+    // set radial attinuation
+    float lightDistance = sqrtf(sqr(direction[0]) + sqr(direction[1]) + sqr(direction[2]));
+    float denom = lights[lightNum].radA[0] + (lights[lightNum].radA[1] * lightDistance) + (lights[lightNum].radA[2] * sqr(lightDistance));
     assert(denom != 0); 
     float radA = 1 / denom;
 
+    // set angular attinuation
+    float angA = 1.0;
     if (lights[lightNum].isSpotLight) {
-        float vObj[3] = {0,0,0};
-        v3_subtract(vObj, origin, lights[lightNum].position);
-        angA = pow(v3_dot_product(vObj, lights[lightNum].direction), lights[lightNum].angular);
+        angA = pow(v3_dot_product(lights[lightNum].position, direction), lights[lightNum].angular);
         if (angA < lights[lightNum].cosTheta) {
             angA = 0;  
         }
     }
 
-    // Value N in the equations
-    float surfNorm[3] = {0,0,0};
-    if (objects[objNum].type == PLANE) {
-        setArray(surfNorm, objects[objNum].value.normal);  
-                 
-    }
-    else if (objects[objNum].type == SPHERE) {
-        v3_subtract(surfNorm, origin, objects[objNum].position);  
-    }  
-    v3_normalize(surfNorm, surfNorm);
+    float objDistance = INFINITY;
+    float currentDistance;
+    // loop through all objects
+    for (int curObj = 0; curObj <= numObjects; curObj++) {
+        // skip current object
+        if (curObj != objNum) {       
+            if (objects[curObj].type == PLANE) {
+                currentDistance = planeIntersection(origin, direction, objects[curObj].position, objects[curObj].value.normal);
+            }       
+            else {
+                currentDistance = sphereIntersection(origin, direction, objects[curObj].position, objects[curObj].value.radius);
+            }
+            if (currentDistance < objDistance && currentDistance > 0) {
+                objDistance = currentDistance;
+            }
+            if (abs(objDistance - lightDistance) < 0.00000001) {
 
-    // Value L in equations
-    float lightVect[3] = {0,0,0};
-    get_light_vector(lightVect, origin, surfNorm);
+                // Value N in the equations
+                float surfNorm[3] = {0,0,0};
+                if (objects[objNum].type == PLANE) {
+                    setArray(surfNorm, objects[objNum].value.normal);              
+                }
+                else if (objects[objNum].type == SPHERE) {
+                    v3_subtract(surfNorm, origin, objects[objNum].position);  
+                }  
+                v3_normalize(surfNorm, surfNorm);
 
-    // Value R in equations
-    float reflectVect[3] = {0,0,0};
-    v3_reflect(reflectVect, lightVect, surfNorm);
+                // Value L in equations
+                float lightVect[3] = {0,0,0};
+                setArray(lightVect, direction);
+                v3_normalize(lightVect, lightVect);
 
-    // Value V in equations
-    float viewVect[3] = {0,0,0};
-    //TODO: set veiwVect to correct value, 
+                // Value R in equations
+                float reflectVect[3] = {0,0,0};
+                for (int a = 0; a < 3; a++) {
+                    reflectVect[a] = 2 * surfNorm[a] * v3_dot_product(surfNorm, lightVect) - lightVect[a];
+                }
 
-    for (int x = 0; x < 3; x++) {
-        float diffuse = objects[objNum].diffColor[x] * (surfNorm[x] * lightVect[x]);
-        float specular = objects[objNum].specColor[x] * pow((reflectVect[x] * viewVect[x]), ns);
-        color[x] += (radA * angA * lights[lightNum].color[x] * (diffuse + specular));
+                // Value V in equations
+                float viewVect[3] = {0,0,0};
+                setArray(viewVect, direction);
+                v3_scale(viewVect, -1);
 
+                for (int x = 0; x < 3; x++) {
+                    float diffDotProd = surfNorm[x] * lightVect[x];
+                    float specDotProd = reflectVect[x] * viewVect[x];
+                    if (diffDotProd >= 0 && specDotProd >= 0) {
+                            float diffuse = objects[objNum].diffColor[x] * lights[lightNum].color[x] * diffDotProd;
+                            float specular = objects[objNum].specColor[x] * lights[lightNum].color[x] * pow(specDotProd, ns);
+                            color[x] += radA * angA * (diffuse + specular);
+                    }
+                }  
+            }
+        }
     }   
 }
 
@@ -379,9 +382,21 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     if (recLevel == 0) {
         return;
     }
-
-    int objNum = 0;
-    float distance = getDistance(origin, direction, &objNum);
+    float distance = INFINITY;
+    float intersectDist;
+    int nearObj = 0;
+    for (int num = 0; num <= numObjects; num++) {
+        if (objects[num].type == PLANE) {
+            intersectDist = planeIntersection(origin, direction, objects[num].position, objects[num].value.normal);
+        }       
+        else {
+            intersectDist = sphereIntersection(origin, direction, objects[num].position, objects[num].value.radius);
+        }
+        if (intersectDist < distance) {
+            distance = intersectDist;
+            nearObj = num;
+        }
+    }
     if (distance == INFINITY) {
         return;
     }
@@ -405,7 +420,14 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     //TODO: ensure correct parameters, origin should be the point of intersection with object
     //      direction should be ray direction towards the light
     for (int lightNum = 0; lightNum <= numLights; lightNum++) {
-        illuminate(direction, direction, color, lightNum);
+        // new origin
+        v3_add(origin, origin, direction);
+        v3_scale(origin, distance);
+
+        // new direction
+        v3_subtract(direction, lights[lightNum].position, origin);
+
+        illuminate(origin, direction, color, distance, nearObj, lightNum);
     }
 }
 
@@ -470,9 +492,8 @@ int main (int argc, char *argv[]) {
                                   -1};
 
             v3_normalize(direction, direction); 
-
             setArray(finalColor, backgroundColor);
-
+            
             shoot(origin, direction, finalColor, 7); 
             
             int location = (col*image->width*3)+(row*3);
@@ -481,7 +502,6 @@ int main (int argc, char *argv[]) {
             }
         }
     }
-
     writeP3(image, output);
     printf("\nCreated image %s\n\n", output);
     free(image);
