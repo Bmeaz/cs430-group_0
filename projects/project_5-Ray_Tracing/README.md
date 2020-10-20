@@ -1,4 +1,4 @@
- # Project 4 - Illumination
+ # Project 5 - Ray Tracing
  
  ## Authors
      Brandon Measley: bcm223@nau.edu
@@ -6,7 +6,7 @@
      Steve Sprouls  : sms986@nau.edu
      
  ## Usage
-     Program that is part 1 of 3 in creating a raycaster
+     Final version of our raycaster
      
      To use program. compile by running 'make' in the command line:
      
