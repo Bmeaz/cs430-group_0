@@ -407,7 +407,8 @@ float calcReflectVect(float* V1, float* V2){
 	float* reflectVect = malloc(3 * sizeof(float));
 	v3_scale(V2, 2 * v3_dot(V2, V1);
 	v3_subtract(V1, reflectVect, reflectVect);
-	normalize(reflectVect);
+	normalize(V1, reflectVect); //not sure if this line is correct
+	return reflectVect;
 	}
 
 ////////////////////////////////////////////////////
