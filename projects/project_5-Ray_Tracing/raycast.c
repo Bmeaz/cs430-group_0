@@ -402,7 +402,7 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
 ///////CALCULATE REFLECTION VECTOR///////////////////
 //calculates the reflection of vector 1 over vector 2
 
-float calcReflectVect(float* V1, float* V2){
+float calcReflectVect(float* V1, float* V2){ //might be able to use v3_reflect instead of this function
 	
 	float* reflectVect = malloc(3 * sizeof(float));
 	v3_scale(V2, 2 * v3_dot(V2, V1);
