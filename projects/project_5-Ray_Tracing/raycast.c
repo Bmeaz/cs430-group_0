@@ -399,20 +399,6 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
 
     /*TODO: Project 5 
 
-///////CALCULATE REFLECTION VECTOR///////////////////
-//calculates the reflection of vector 1 over vector 2
-
-float calcReflectVect(float* V1, float* V2){ //might be able to use v3_reflect instead of this function
-	
-	float* reflectVect = malloc(3 * sizeof(float));
-	v3_scale(V2, 2 * v3_dot(V2, V1);
-	v3_subtract(V1, reflectVect, reflectVect);
-	normalize(V1, reflectVect); //not sure if this line is correct
-	return reflectVect;
-	}
-
-////////////////////////////////////////////////////
-
     if (objects[nearObj].reflect > 0) {
         // set new ro at intersection and rd which is the reflection vector
         shoot(origin, direction, reflectionColor, recLevel - 1);
