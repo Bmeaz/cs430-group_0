@@ -407,11 +407,11 @@ float reflect(objects[object], x, vectorOne, int level) //not sure what level is
 			return black;
 		else{
 			reflectionVect = v3_reflect(x, object, surfNum);
-			(object, t) = intersect(x, reflectionVect);   //not sure what t is supposed to be
-			if (t == INFINITY)
+			(object, distance) = intersect(x, reflectionVect);   
+			if (distance == INFINITY)
 				color = backgroundcolor;
 			else{
-				m_color = shoot(object, x + t * reflectionVect, reflectionVect, level + 1);
+				m_color = shoot(object, x + distance * reflectionVect, reflectionVect, level + 1);
 				color = illuminate(object, x, vectorOne, m_color, -(reflectionVect));
 			}
 			for(Light = 0, Lights += 1, Lights < 129) //lights in the scene...there are 128 lights if im not mistaken
