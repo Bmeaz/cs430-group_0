@@ -87,8 +87,11 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
 
     // set angular attinuation
     float angA = 1.0;
+    float vObj[3] = subtract(vObj, origin, lights[lightNum].position); // Added this line to compute vObj
     if (lights[lightNum].isSpotLight) {
-        angA = pow(v3_dot_product(lights[lightNum].position, direction), lights[lightNum].angular);
+        // According to my notes: angA = vObj * vLight ^ angular = ((origin-lightPosition) * direction)^angular
+        // angA = pow(v3_dot_product(lights[lightNum].position, direction), lights[lightNum].angular); OLD LINE
+        angA = pow(v3_dot_product(vObj, direction), lights[lightNum].angular);
         if (angA < lights[lightNum].cosTheta) {
             angA = 0;  
         }
@@ -120,9 +123,11 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
                 }  
                 v3_normalize(surfNorm, surfNorm);
 
-                // Value L in equations
+                // Value L in equations According to my notes: L = -vObj
                 float lightVect[3] = {0,0,0};
-                setArray(lightVect, direction);
+                float negArrray[3] = {-1, -1, -1}; // NEW CODE
+                //setArray(lightVect, direction); Commented out OLD CODE
+                v3_dot_product(lightVect, lightVect, negArray); // NEW CODE
 
                 // Value R in equations
                 float reflectVect[3] = {0,0,0};
@@ -136,8 +141,10 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
                 v3_scale(viewVect, -1);
                 for (int x = 0; x < 3; x++) {
                     // the following two variables should not be the absolute(fabs) but for some reason it works when it is
-                    float diffDotProd = fabs(surfNorm[x] * lightVect[x]);
-                    float specDotProd = fabs(reflectVect[x] * viewVect[x]);
+                    //float diffDotProd = fabs(surfNorm[x] * lightVect[x]); OLD CODE
+                    //float specDotProd = fabs(reflectVect[x] * viewVect[x]); OLD CODE
+                    float diffDotProd = surfNorm[x] * lightVect[x];
+                    float specDotProd = reflectVect[x] * viewVect[x];
                     if (diffDotProd != 0 && specDotProd != 0) {
                             float diffuse = objects[objNum].diffColor[x] * lights[lightNum].color[x] * diffDotProd;
                             float specular = objects[objNum].specColor[x] * lights[lightNum].color[x] * pow(specDotProd, ns);
