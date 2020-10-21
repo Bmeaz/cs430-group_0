@@ -399,6 +399,31 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
 
     /*TODO: Project 5 
 
+////////reflect pseudocode from book///////////
+
+float reflect(objects[object], x, vectorOne, int level) //not sure what level is
+	{
+		if (level > 7) //should recurse 7 times at the most
+			return black;
+		else{
+			reflectionVect = v3_reflect(x, object, surfNum);
+			(object, t) = intersect(x, reflectionVect);   //not sure what t is supposed to be
+			if (t == INFINITY)
+				color = backgroundcolor;
+			else{
+				m_color = shoot(object, x + t * reflectionVect, reflectionVect, level + 1);
+				color = illuminate(object, x, vectorOne, m_color, -(reflectionVect));
+			}
+			for(Light = 0, Lights += 1, Lights < 129) //lights in the scene...there are 128 lights if im not mistaken
+				if(light i visible from x) //not sure how to write this
+					color += illuminate(object, x, vectorOne, lights[i].color, light[i].direction);
+			return color;
+			}
+		}
+////////////////////////////////////////////////
+
+
+
     if (objects[nearObj].reflect > 0) {
         // set new ro at intersection and rd which is the reflection vector
         shoot(origin, direction, reflectionColor, recLevel - 1);
