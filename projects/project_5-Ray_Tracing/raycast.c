@@ -407,7 +407,7 @@ float reflect(objects[object], x, vectorOne, int level) //not sure what level is
 			return black;
 		else{
 			reflectionVect = v3_reflect(x, object, surfNum);
-			(object, distance) = intersect(x, reflectionVect);   
+			(object, distance) = sphereIntersect(x, reflectionVect);   
 			if (distance == INFINITY)
 				color = backgroundcolor;
 			else{
