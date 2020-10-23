@@ -77,23 +77,12 @@ float v3_angle_quick(float *a, float *b){
 }
 
 
-// From notes in class:
-// Vr = v + 2b
-// b = -(n*v) * n
-// Vr = v + -2 (n*v) * n
 void v3_reflect(float *dst, float *v, float *n) {
-    /*    float val = v3_dot_product(v, n);
-    for (int x = 0; x < 3; x++) {
-        dst[x] = 2 * val * n[x] - v[x];
-    } */
-    for(int refIndex = 0; refIndex < 3; refIndex++){
-        // Compute b at the start of the loop
-        float b = -((n[refIndex])*(v[refIndex])) * (n[refIndex]);
-        //Compute Vr by using previously calculated b
-        dst[refIndex] = v[refIndex] + (2*b);
-    }
-
-
+    float prod[3] = {0,0,0};
+    float b = v3_dot_product(v, n) * 2;
+    setArray(prod, v);
+    v3_scale(n, b);
+    v3_subtract(dst, v, prod);
 }
 
 float v3_length(float *a){
