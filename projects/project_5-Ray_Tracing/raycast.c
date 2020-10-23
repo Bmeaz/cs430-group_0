@@ -404,9 +404,9 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
 float reflect(objects[object], x, vectorOne, int level) //not sure what level is
 	{
 		if (level > 7) //should recurse 7 times at the most
-			return black;
+			return backgroundcolor;
 		else{
-			reflectionVect = v3_reflect(x, object, surfNum);
+			reflectionVect = v3_reflect(x, object, surfNum); 
 			(object, distance) = intersect(x, reflectionVect);   
 			if (distance == INFINITY)
 				color = backgroundcolor;
