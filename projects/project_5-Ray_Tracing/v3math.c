@@ -10,23 +10,12 @@ void setArray(float *dst, float *a) {
     dst[2] = a[2];
 
 }
-
-void get_light_vector(float *dst, float *o, float *n) {
-    float numerator[3] = {0,0,0};
-    float denom[3] = {0,0,0};
-    v3_subtract(numerator, o, n);
-    setArray(denom, numerator);
-    v3_normalize(denom, denom);
-    v3_divide(dst, numerator, denom);
+ 
+void v3_multiply(float *dst, float *a, float *b) {
+    dst[0] = a[0] * b[0];
+    dst[1] = a[1] * b[1];
+    dst[2] = a[2] * b[2];
 }
-    
-void v3_divide(float *dst, float *a, float *b) {
-    for (int x = 0; x < 3; x ++) {
-        assert(b[x] != 0);
-        dst[x] = a[x] / b[x];
-    }
-}
-    
     
 void v3_from_points(float *dst, float *a, float *b) {
     dst[0] = b[0] - a[0];
