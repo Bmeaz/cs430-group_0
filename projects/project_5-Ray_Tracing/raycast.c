@@ -26,7 +26,6 @@ typedef struct Object {
     int type; 
     float diffColor[3], specColor[3];
     float position[3];
-    float reflect;
     union {
         float radius;
         float normal[3];
@@ -87,11 +86,11 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
 
     // set angular attinuation
     float angA = 1.0;
-    float vObj[3] = subtract(vObj, origin, lights[lightNum].position); // Added this line to compute vObj
+	float vObj[3] = {0,0,0};
+	v3_subtract(vObj, origin, lights[lightNum].position);
     if (lights[lightNum].isSpotLight) {
-        // According to my notes: angA = vObj * vLight ^ angular = ((origin-lightPosition) * direction)^angular
-        // angA = pow(v3_dot_product(lights[lightNum].position, direction), lights[lightNum].angular); OLD LINE
-        angA = pow(v3_dot_product(vObj, direction), lights[lightNum].angular);
+        //angA = pow(v3_dot_product(lights[lightNum].position, direction), lights[lightNum].angular);
+		angA = pow(v3_dot_product(vObj, direction), lights[lightNum].angular);
         if (angA < lights[lightNum].cosTheta) {
             angA = 0;  
         }
@@ -123,17 +122,18 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
                 }  
                 v3_normalize(surfNorm, surfNorm);
 
-                // Value L in equations According to my notes: L = -vObj
+                // Value L in equations
                 float lightVect[3] = {0,0,0};
-                float negArrray[3] = {-1, -1, -1}; // NEW CODE
-                //setArray(lightVect, direction); Commented out OLD CODE
-                v3_dot_product(lightVect, lightVect, negArray); // NEW CODE
+				
+                setArray(lightVect, direction);
 
                 // Value R in equations
                 float reflectVect[3] = {0,0,0};
                 for (int a = 0; a < 3; a++) {
                     reflectVect[a] = direction[a] - (2  * v3_dot_product(surfNorm, direction) * surfNorm[a]);
                 }
+				//v3_reflect(reflectVect, direction, surfNorm);
+
 
                 // Value V in equations
                 float viewVect[3] = {0,0,0};
@@ -141,10 +141,10 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
                 v3_scale(viewVect, -1);
                 for (int x = 0; x < 3; x++) {
                     // the following two variables should not be the absolute(fabs) but for some reason it works when it is
-                    //float diffDotProd = fabs(surfNorm[x] * lightVect[x]); OLD CODE
-                    //float specDotProd = fabs(reflectVect[x] * viewVect[x]); OLD CODE
-                    float diffDotProd = surfNorm[x] * lightVect[x];
-                    float specDotProd = reflectVect[x] * viewVect[x];
+                    float diffDotProd = fabs(surfNorm[x] * lightVect[x]);
+                    float specDotProd = fabs(reflectVect[x] * viewVect[x]);
+                    //float diffDotProd = surfNorm[x] * lightVect[x];
+                    //float specDotProd = reflectVect[x] * viewVect[x];
                     if (diffDotProd != 0 && specDotProd != 0) {
                             float diffuse = objects[objNum].diffColor[x] * lights[lightNum].color[x] * diffDotProd;
                             float specular = objects[objNum].specColor[x] * lights[lightNum].color[x] * pow(specDotProd, ns);
@@ -349,9 +349,6 @@ void setValue(char name[], char value[], int type) {
         else if (strcmp(name, "normal") == 0) {
             setArray(objects[numObjects].value.normal, array);
         }
-        else if (strcmp(name, "reflectivity") == 0) {
-            objects[numObjects].reflect = atof(value);
-        }
         else {           
             fail("a value or name in an object is incorrect in the input file");
         }
@@ -408,16 +405,42 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
         return;
     }
 
+    /*TODO: Project 5 
+
+////////reflect pseudocode from book///////////
+
+float reflect(objects[object], x, vectorOne, int level) //not sure what level is
+	{
+		if (level > 7) //should recurse 7 times at the most
+			return backgroundcolor;
+		else{
+			reflectionVect = v3_reflect(x, object, surfNum); 
+			(object, distance) = intersect(x, reflectionVect);   
+			if (distance == INFINITY)
+				color = backgroundcolor;
+			else{
+				m_color = shoot(object, x + distance * reflectionVect, reflectionVect, level + 1); //again, not sure what level is supposed to be
+				color = illuminate(object, x, vectorOne, m_color, -(reflectionVect));
+			}
+			for(Light = 0, Lights += 1, Lights < 129) //lights in the scene...there are 128 lights if im not mistaken
+				if(light i visible from x) //not sure how to write this
+					color += illuminate(object, x, vectorOne, lights[i].color, light[i].direction);
+			return color;
+			}
+		}
+////////////////////////////////////////////////
+
+
+
     if (objects[nearObj].reflect > 0) {
-        //TODO:  set new origin
-        //TODO:  set new direction
-        //TODO:  create new value for reflection color 
-        shoot(origin, direction, color, recLevel - 1); //recurse 
+        // set new ro at intersection and rd which is the reflection vector
+        shoot(origin, direction, reflectionColor, recLevel - 1);
     }
 
-    assert(objects[nearObj].reflect <= 1);
-    float opacity = 1 - objects[nearObj].reflect;
-
+    assert(objects[nearObj].reflect + objects[nearObj].refract <= 1);
+    //float opacity = 1 - objects[nearObj].reflect - objects[nearObj].reflect;
+    */
+    float opacity = 1; //temp value
     if (opacity > 0) { 
         for (int lightNum = 0; lightNum <= numLights; lightNum++) {
             // new origin
