@@ -26,6 +26,7 @@ typedef struct Object {
     int type; 
     float diffColor[3], specColor[3];
     float position[3];
+    float reflect;
     union {
         float radius;
         float normal[3];
@@ -86,11 +87,11 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
 
     // set angular attinuation
     float angA = 1.0;
-	float vObj[3] = {0,0,0};
-	v3_subtract(vObj, origin, lights[lightNum].position);
+    float vObj[3] = {0,0,0};
+    v3_subtract(vObj, origin, lights[lightNum].position);
     if (lights[lightNum].isSpotLight) {
         //angA = pow(v3_dot_product(lights[lightNum].position, direction), lights[lightNum].angular);
-		angA = pow(v3_dot_product(vObj, direction), lights[lightNum].angular);
+	angA = pow(v3_dot_product(vObj, direction), lights[lightNum].angular);
         if (angA < lights[lightNum].cosTheta) {
             angA = 0;  
         }
@@ -132,7 +133,7 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
                 for (int a = 0; a < 3; a++) {
                     reflectVect[a] = direction[a] - (2  * v3_dot_product(surfNorm, direction) * surfNorm[a]);
                 }
-				//v3_reflect(reflectVect, direction, surfNorm);
+		//v3_reflect(reflectVect, direction, surfNorm);
 
 
                 // Value V in equations
@@ -405,7 +406,30 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
         return;
     }
 
-    /*TODO: Project 5 
+    if (objects[nearObj].reflect > 0) {
+        //TODO:  set new origin
+        //TODO:  set new direction
+        //TODO:  create new value for reflection color 
+        shoot(origin, direction, color, recLevel - 1); //recurse 
+    }
+
+    assert(objects[nearObj].reflect <= 1);
+    float opacity = 1 - objects[nearObj].reflect;
+
+    if (opacity > 0) { 
+        for (int lightNum = 0; lightNum <= numLights; lightNum++) {
+            // new origin
+            setArray(origin, direction);
+            v3_scale(origin, distance);
+
+            // new direction
+            v3_subtract(direction, lights[lightNum].position, origin);
+            v3_normalize(direction, direction);
+
+            illuminate(origin, direction, color, nearObj, lightNum);
+        }
+    }
+}
 
 ////////reflect pseudocode from book///////////
 
