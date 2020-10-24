@@ -14,9 +14,7 @@ float sqr( float value);
 
 void setArray(float *dst, float *a);
 
-void get_light_vector(float *dst, float *o, float *n);
-
-void v3_divide(float *dst, float *a, float *b);
+void v3_multiply(float *dst, float *a, float *b) ;
 
 void v3_from_points (float *dst, float *a, float *b);
 
