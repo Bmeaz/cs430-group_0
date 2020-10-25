@@ -461,7 +461,8 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     // trace ray if reflection 
     if (objects[nearObj].reflect > 0) {
         //TODO:  set new direction which is reflection point over the surface normal
-        //shoot(newOrigin, direction, color, recLevel - 1); //recurse
+	//float newDirection[3] = {0,0,0};
+        //shoot(newOrigin, newDirection, color, recLevel - 1); //recurse
         //v3_scale(color, objects[nearObj].reflect / recLevel),
     }
 
