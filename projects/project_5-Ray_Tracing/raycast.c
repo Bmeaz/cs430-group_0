@@ -51,7 +51,7 @@ void  setValue(char name[], char value[], int type);
 float getAngular(int lightNum, float *vObj);
 float getRadial(int lightNum, float lightDistance);
 void  illuminate(float *origin, float *direction, float *color, int objNum, int lightNum);
-float intercect(float *origin, float *direction, int objOrigin, int *nearObj);
+float intersect(float *origin, float *direction, int objOrigin, int *nearObj);
 float planeIntersection(float *origin, float* direction, float* position, float* normal);
 float sphereIntersection(float *origin, float* direction, float* position, float radius);
 void  shoot(float *origin, float *direction, float *color, int recLevel);
@@ -283,7 +283,7 @@ void setValue(char name[], char value[], int type) {
 ///  RAYCAST METHODS  //
 ////////////////////////
 
-///////////// GETANULAR /////////////////////////////////
+///////////// GETANGULAR /////////////////////////////////
 float getAngular(int lightNum, float *vObj) {
     float angA = 1.0;
     if (lights[lightNum].isSpotLight) {
@@ -322,7 +322,7 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     // test if object inbetween current obj and light
     int nearObj = -1;
     test = true;
-    float obsticle = intercect(origin, lightVect, objNum, &nearObj);
+    float obsticle = intersect(origin, lightVect, objNum, &nearObj);
 
     // object in way, return shadow
     if (obsticle != INFINITY) {
@@ -353,7 +353,7 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     v3_scale(vObj, -1);
     v3_normalize(vObj, vObj);
 
-    // set attinuations
+    // set attenuations
     float radA = getRadial(lightNum, lightDistance);
     float angA = getAngular(lightNum, vObj);
 
@@ -372,8 +372,8 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     color[2] += radA * angA * (specular[2] + diffuse[2]);
 }
 
-///////////// INTERCECT /////////////////////////////////
-float intercect(float *origin, float *direction, int objOrigin, int *nearObj) {
+///////////// INTERSECT /////////////////////////////////
+float intersect(float *origin, float *direction, int objOrigin, int *nearObj) {
     float closestDistance = INFINITY;
     float distance;
     for (int num = 0; num <= numObjects; num++) {
@@ -445,14 +445,14 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     
     // get nearest object number and the distance
     int nearObj = -1;
-    float distance = intercect(origin, direction, -1, &nearObj);
+    float distance = intersect(origin, direction, -1, &nearObj);
 
     // return if there is no nearest object
     if (distance == INFINITY) {  
         return;
     }
 
-    // set new origin at intercection
+    // set new origin at intersection
     float newOrigin[3] = {0,0,0};
     setArray(newOrigin, direction);
     v3_scale(newOrigin, distance);
