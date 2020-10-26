@@ -24,6 +24,7 @@ typedef struct Pixel {
     uint8_t blue;
 } Pixel;
 
+float clamp( float color, int max);
 
 void fail (char *errMsg);
 
