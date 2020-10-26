@@ -57,6 +57,11 @@ float sphereIntersection(float *origin, float* direction, float* position, float
 void  shoot(float *origin, float *direction, float *color, int recLevel);
  
 
+//TODO: WHITE SPOTS
+//TODO: TEST FILES
+//TODO: SPOTLIGHT TEST
+//TODO: REFLECT
+
 ///////////// CHECKVALUE /////////////////////////////////
 void checkValue(char str[], float *arr) {
     int counter = 0;
@@ -144,9 +149,6 @@ void readFile(char* filename) {
              setValue(name, value, type);             
              curChar = tolower(getc(file));
              if (type == LIGHT && curChar != EOF) {
-                 if (lights[numLights].angular != 0) {
-                    lights[numLights].isSpotLight = true;
-                 }
                  numLights++;
              }
              else if (type != CAMERA && curChar != EOF && curChar != 'l') {
@@ -232,7 +234,10 @@ void setValue(char name[], char value[], int type) {
             setArray(lights[numLights].position, array);
         }
         else if (strcmp(name, "theta") == 0) {
-            lights[numLights].cosTheta = acosf(atof(value));
+            if (atof(value) != 0) {
+                lights[numLights].cosTheta = acosf(atof(value));
+                lights[numLights].isSpotLight = true;
+            }
         }
         else if (strcmp(name, "radial-a0") == 0) {
             lights[numLights].radA[0] = atof(value);
@@ -369,13 +374,12 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     v3_scale(specular, pow(v3_dot_product(reflectVect, viewVect), ns));
     //v3_scale(specular, pow(v3_dot_product(surfNorm, lightVect), ns));
 	//v3_normalize(specular, specular);
-
-	radA = 1;
-	angA = 1;
-  
-    color[0] += radA * angA * (specular[0] + diffuse[0]);
-    color[1] += radA * angA * (specular[1] + diffuse[1]);
-    color[2] += radA * angA * (specular[2] + diffuse[2]);
+    for (int x = 0; x < 3; x++) {
+       float newColor = radA * angA * (specular[x] + diffuse[x]);
+       if (newColor > 0 && newColor != INFINITY) {
+           color[x] += newColor;
+       }
+    }
 }
 
 ///////////// INTERCECT /////////////////////////////////
@@ -453,7 +457,7 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     // get nearest object number and the distance
     int nearObj = -1;
     float distance = intercect(origin, direction, -1, &nearObj);
-	//printf("Distance: %f",distance);
+
     // return if there is no nearest object
     if (distance == INFINITY) {  
         return;
@@ -465,32 +469,23 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     v3_scale(newOrigin, distance);
     v3_add(newOrigin, newOrigin, origin);
 
-	float newDirection[3] = {0,0,0};
-	float newSurfNorm[3] = {0,0,0};
-
     // trace ray if reflection 
     if (objects[nearObj].reflect > 0) {
+
         //TODO:  set new direction which is reflection point over the surface normal
+		float surfNorm[3] = {0,0,0};
+        float newDirection[3] = {0,0,0};
+        v3_subtract(surfNorm, newOrigin, objects[nearObj].position);
+        v3_normalize(surfNorm,surfNorm);
+        v3_reflect(newDirection, direction, surfNorm);
 
-		v3_subtract(newSurfNorm, newOrigin, objects[nearObj].position);
+        float reflectColor[3] = {0,0,0};
+        shoot(newOrigin, newDirection, reflectColor, recLevel-1); //recurse
 
-    	v3_normalize(newSurfNorm, newSurfNorm);
+        color[0] = reflectColor[0] * objects[nearObj].reflect;
+        color[1] = reflectColor[1] * objects[nearObj].reflect;
+        color[2] = reflectColor[2] * objects[nearObj].reflect;
 
-		//float testVal = v3_dot_product(direction, newSurfNorm);
-		//printf("\n TESTVAL: %f \n", testVal);
-
-		v3_reflect(newDirection, direction, newSurfNorm);
-		
-		for(int arrayIndex = 0; arrayIndex < 3; arrayIndex++){
-			//printf("\n newSurfNorm Values: %f\n", newSurfNorm[arrayIndex]);
-			//printf("\n Direction Value: %f \n", direction[arrayIndex]);
-			//printf("\n newDirection Value: %f \n", newDirection[arrayIndex]);
-		}
-        //v3_scale(color, objects[nearObj].reflect / recLevel);
-        shoot(newOrigin, newDirection, color, recLevel-1); //recurse
-		//printf("\n RECLEVEL: %d \n", recLevel);
-		//printf("\n Color Scale Val: %f \n", objects[nearObj].reflect/recLevel);
-        v3_scale(color, objects[nearObj].reflect / recLevel); //MOVED UP
     }
 
     assert(objects[nearObj].reflect <= 1);
@@ -499,7 +494,7 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
 
     if (opacity > 0) { 
         for (int lightNum = 0; lightNum <= numLights; lightNum++) {
-            illuminate(newOrigin, newDirection, color, nearObj, lightNum);
+            illuminate(newOrigin, direction, color, nearObj, lightNum);
 			//printf("\nILLUMINATE!\n");
         }
     }
