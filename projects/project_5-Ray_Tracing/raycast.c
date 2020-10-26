@@ -463,6 +463,10 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
         return;
     }
 
+    float reflectColor[3] = {0,0,0};
+    float objectColor[3] = {0,0,0};
+
+
     // set new origin at intercection
     float newOrigin[3] = {0,0,0};
     setArray(newOrigin, direction);
@@ -479,12 +483,7 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
         v3_normalize(surfNorm,surfNorm);
         v3_reflect(newDirection, direction, surfNorm);
 
-        float reflectColor[3] = {0,0,0};
         shoot(newOrigin, newDirection, reflectColor, recLevel-1); //recurse
-
-        color[0] = reflectColor[0] * objects[nearObj].reflect;
-        color[1] = reflectColor[1] * objects[nearObj].reflect;
-        color[2] = reflectColor[2] * objects[nearObj].reflect;
 
     }
 
@@ -494,9 +493,13 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
 
     if (opacity > 0) { 
         for (int lightNum = 0; lightNum <= numLights; lightNum++) {
-            illuminate(newOrigin, direction, color, nearObj, lightNum);
+            illuminate(newOrigin, direction, objectColor, nearObj, lightNum);
 			//printf("\nILLUMINATE!\n");
         }
+    }
+
+    for (int x = 0; x < 3; x++) {
+        color[x] = opacity * objectColor[x] + reflectColor[x] * objects[nearObj].reflect;
     }
 }
 
