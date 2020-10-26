@@ -51,7 +51,7 @@ void  setValue(char name[], char value[], int type);
 float getAngular(int lightNum, float *vObj);
 float getRadial(int lightNum, float lightDistance);
 void  illuminate(float *origin, float *direction, float *color, int objNum, int lightNum);
-float intersect(float *origin, float *direction, int objOrigin, int *nearObj);
+float intercect(float *origin, float *direction, int objOrigin, int *nearObj);
 float planeIntersection(float *origin, float* direction, float* position, float* normal);
 float sphereIntersection(float *origin, float* direction, float* position, float radius);
 void  shoot(float *origin, float *direction, float *color, int recLevel);
@@ -283,7 +283,7 @@ void setValue(char name[], char value[], int type) {
 ///  RAYCAST METHODS  //
 ////////////////////////
 
-///////////// GETANGULAR /////////////////////////////////
+///////////// GETANULAR /////////////////////////////////
 float getAngular(int lightNum, float *vObj) {
     float angA = 1.0;
     if (lights[lightNum].isSpotLight) {
@@ -322,10 +322,10 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     // test if object inbetween current obj and light
     int nearObj = -1;
     test = true;
-    float obsticle = intersect(origin, lightVect, objNum, &nearObj);
+    float obstacle = intercect(origin, lightVect, objNum, &nearObj);
 
     // object in way, return shadow
-    if (obsticle != INFINITY) {
+    if (obstacle != INFINITY) {
         return;
     }
 
@@ -353,7 +353,7 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     v3_scale(vObj, -1);
     v3_normalize(vObj, vObj);
 
-    // set attenuations
+    // set attinuations
     float radA = getRadial(lightNum, lightDistance);
     float angA = getAngular(lightNum, vObj);
 
@@ -361,27 +361,34 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     float diffuse[3] = {0,0,0};
     v3_multiply(diffuse, objects[objNum].diffuse, lights[lightNum].color);
     v3_scale(diffuse, v3_dot_product(surfNorm, lightVect));
+	//v3_normalize(diffuse, diffuse);
 
     // get specular
     float specular[3] = {0,0,0};
     v3_multiply(specular, objects[objNum].specular, lights[lightNum].color);
     v3_scale(specular, pow(v3_dot_product(reflectVect, viewVect), ns));
+    //v3_scale(specular, pow(v3_dot_product(surfNorm, lightVect), ns));
+	//v3_normalize(specular, specular);
+
+	radA = 1;
+	angA = 1;
   
     color[0] += radA * angA * (specular[0] + diffuse[0]);
     color[1] += radA * angA * (specular[1] + diffuse[1]);
     color[2] += radA * angA * (specular[2] + diffuse[2]);
 }
 
-///////////// INTERSECT /////////////////////////////////
-float intersect(float *origin, float *direction, int objOrigin, int *nearObj) {
+///////////// INTERCECT /////////////////////////////////
+float intercect(float *origin, float *direction, int objOrigin, int *nearObj) {
     float closestDistance = INFINITY;
     float distance;
     for (int num = 0; num <= numObjects; num++) {
+    //printf("\n Object Type: %d \n", objects[num].type);
    // TODO:
    // issue when the only object in the way is itself
    // if we skip the object the area that needs to be shaded will not have anything in its way and will have color
    // if we dont skip the object then it will have black spots, see Piazza question 
-   //    if (num != objOrigin) {          
+       if (num != objOrigin) {          
             if (objects[num].type == PLANE) {
                 distance = planeIntersection(origin, direction, objects[num].position, objects[num].value.normal);
             }       
@@ -392,7 +399,7 @@ float intersect(float *origin, float *direction, int objOrigin, int *nearObj) {
                 closestDistance = distance;
                 *nearObj = num;   
             }
-    //    }
+        }
         
     }
     return closestDistance;
@@ -445,31 +452,45 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     
     // get nearest object number and the distance
     int nearObj = -1;
-    float distance = intersect(origin, direction, -1, &nearObj);
-
+    float distance = intercect(origin, direction, -1, &nearObj);
+	//printf("Distance: %f",distance);
     // return if there is no nearest object
     if (distance == INFINITY) {  
         return;
     }
 
-    // set new origin at intersection
+    // set new origin at intercection
     float newOrigin[3] = {0,0,0};
     setArray(newOrigin, direction);
     v3_scale(newOrigin, distance);
     v3_add(newOrigin, newOrigin, origin);
 
+	float newDirection[3] = {0,0,0};
+	float newSurfNorm[3] = {0,0,0};
+
     // trace ray if reflection 
     if (objects[nearObj].reflect > 0) {
         //TODO:  set new direction which is reflection point over the surface normal
 
-	//float newDirection[3] = {0,0,0};
-	//setArray(newOrigin, newDirection);
-		//v3_scale(newDirection, distance);	//not sure if we need this
-		//v3_add(newDirection, newDirection, direction);	//not sure if we need this	
-	//v3_reflect(newDirection, newOrigin, surfNorm);
+		v3_subtract(newSurfNorm, newOrigin, objects[nearObj].position);
 
-        //shoot(newOrigin, newDirection, color, recLevel - 1); //recurse
-        //v3_scale(color, objects[nearObj].reflect / recLevel),
+    	v3_normalize(newSurfNorm, newSurfNorm);
+
+		//float testVal = v3_dot_product(direction, newSurfNorm);
+		//printf("\n TESTVAL: %f \n", testVal);
+
+		v3_reflect(newDirection, direction, newSurfNorm);
+		
+		for(int arrayIndex = 0; arrayIndex < 3; arrayIndex++){
+			//printf("\n newSurfNorm Values: %f\n", newSurfNorm[arrayIndex]);
+			//printf("\n Direction Value: %f \n", direction[arrayIndex]);
+			//printf("\n newDirection Value: %f \n", newDirection[arrayIndex]);
+		}
+        //v3_scale(color, objects[nearObj].reflect / recLevel);
+        shoot(newOrigin, newDirection, color, recLevel-1); //recurse
+		//printf("\n RECLEVEL: %d \n", recLevel);
+		//printf("\n Color Scale Val: %f \n", objects[nearObj].reflect/recLevel);
+        v3_scale(color, objects[nearObj].reflect / recLevel); //MOVED UP
     }
 
     assert(objects[nearObj].reflect <= 1);
@@ -478,7 +499,8 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
 
     if (opacity > 0) { 
         for (int lightNum = 0; lightNum <= numLights; lightNum++) {
-            illuminate(newOrigin, direction, color, nearObj, lightNum);
+            illuminate(newOrigin, newDirection, color, nearObj, lightNum);
+			//printf("\nILLUMINATE!\n");
         }
     }
 }
