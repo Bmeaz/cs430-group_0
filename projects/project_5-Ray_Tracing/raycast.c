@@ -292,12 +292,12 @@ void setValue(char name[], char value[], int type) {
 float getAngular(int lightNum, float *vObj) {
     float angA = 1.0;
     if (lights[lightNum].isSpotLight) {
-        angA = v3_dot_product(lights[lightNum].direction, vObj);
+        angA = v3_dot_product(vObj, lights[lightNum].direction);
         if (angA < lights[lightNum].cosTheta) {
             angA = 0;  
         }
         else {
-            angA = pow(angA, lights[lightNum].angular);
+            angA = pow(v3_dot(vObj, lights[lightNum].direction), lights[lightNum].angular);
         }
     }
     return angA;
