@@ -67,11 +67,11 @@ float v3_angle_quick(float *a, float *b){
 
 
 void v3_reflect(float *dst, float *v, float *n) {
-    float prod[3] = {0,0,0};
-    float b = v3_dot_product(v, n) * 2;
-    setArray(prod, v);
-    v3_scale(n, b);
-    v3_subtract(dst, v, prod);
+    setArray(dst, v);
+    float b = -2 * v3_dot_product(v, n);
+    v3_scale(dst, b);
+    v3_add(dst, v, dst);
+    v3_normalize(dst, dst);
 }
 
 float v3_length(float *a){
