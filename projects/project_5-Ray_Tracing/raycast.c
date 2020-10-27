@@ -297,7 +297,8 @@ float getAngular(int lightNum, float *vObj) {
             angA = 0;  
         }
         else {
-            angA = pow(v3_dot_product(vObj, lights[lightNum].direction), lights[lightNum].angular);
+	      angA = pow(angA, lights[lightNum].angular);
+            //angA = pow(v3_dot_product(vObj, lights[lightNum].direction), lights[lightNum].angular);
         }
     }
     return angA;
