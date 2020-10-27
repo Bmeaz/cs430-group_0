@@ -54,13 +54,12 @@ void  illuminate(float *origin, float *direction, float *color, int objNum, int 
 float intercect(float *origin, float *direction, int objOrigin, int *nearObj);
 float planeIntersection(float *origin, float* direction, float* position, float* normal);
 float sphereIntersection(float *origin, float* direction, float* position, float radius);
-void  shoot(float *origin, float *direction, float *color, int recLevel);
+void  shoot(float *origin, float *direction, float *color, int curObj, int recLevel);
  
 
-//TODO: WHITE SPOTS
+//TODO: FIX SPECULAR
 //TODO: TEST FILES
 //TODO: SPOTLIGHT TEST
-//TODO: REFLECT
 
 ///////////// CHECKVALUE /////////////////////////////////
 void checkValue(char str[], float *arr) {
@@ -80,7 +79,7 @@ void checkValue(char str[], float *arr) {
             }
         }
         if (counter != 2 && value[0] != '\0') {
-            fail("Incorrect number of value in tuple for object");
+            fail("Incorrect number of value in tuple for object or light attribute");
         }
         else if (chars == strlen(str)) {
             arr[counter] = atof(value);
@@ -149,7 +148,7 @@ void readFile(char* filename) {
              setValue(name, value, type);             
              curChar = tolower(getc(file));
              if (type == LIGHT) {
-                 if (lights[numLights].direction[0] != 0 && lights[numLights].direction[0] != 0&&
+                 if (lights[numLights].direction[0] != 0 && lights[numLights].direction[0] != 0 &&
                      lights[numLights].direction[0] != 0 && lights[numLights].theta != 0) {
                      lights[numLights].isSpotLight = true;
                  }
@@ -259,7 +258,7 @@ void setValue(char name[], char value[], int type) {
             setArray(lights[numLights].direction, array);
         }
         else {
-            fail("a value or name in an object is incorrect in the input file");
+            fail("a value or name for a light is incorrect in the input file");
         }
     }
     // Set Object value
@@ -283,7 +282,7 @@ void setValue(char name[], char value[], int type) {
             objects[numObjects].reflect = atof(value);
         }
         else {           
-            fail("a value or name in an object is incorrect in the input file");
+            fail("a value or name for a  object is incorrect in the input file");
         }
     }
 }
@@ -335,7 +334,7 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     test = true;
     float obstacle = intercect(origin, lightVect, objNum, &nearObj);
 
-    // object in way, return shadow
+    // object in way
     if (obstacle != INFINITY) {
         return;
     }
@@ -366,14 +365,14 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     float diffuse[3] = {0,0,0};
     v3_multiply(diffuse, objects[objNum].diffuse, lights[lightNum].color);
     v3_scale(diffuse, v3_dot_product(surfNorm, lightVect));
-	//v3_normalize(diffuse, diffuse);
 
+    //TODO: correct specular value, could be issues with viewVect or reflect vect
     // get specular
     float specular[3] = {0,0,0};
     v3_multiply(specular, objects[objNum].specular, lights[lightNum].color);
     v3_scale(specular, pow(v3_dot_product(reflectVect, viewVect), ns));
-    //v3_scale(specular, pow(v3_dot_product(surfNorm, lightVect), ns));
-	//v3_normalize(specular, specular);
+
+    // set color
     for (int x = 0; x < 3; x++) {
        float newColor = radA * angA * (specular[x] + diffuse[x]);
        if (newColor > 0 && newColor != INFINITY) {
@@ -387,11 +386,6 @@ float intercect(float *origin, float *direction, int objOrigin, int *nearObj) {
     float closestDistance = INFINITY;
     float distance;
     for (int num = 0; num <= numObjects; num++) {
-    //printf("\n Object Type: %d \n", objects[num].type);
-   // TODO:
-   // issue when the only object in the way is itself
-   // if we skip the object the area that needs to be shaded will not have anything in its way and will have color
-   // if we dont skip the object then it will have black spots, see Piazza question 
        if (num != objOrigin) {          
             if (objects[num].type == PLANE) {
                 distance = planeIntersection(origin, direction, objects[num].position, objects[num].value.normal);
@@ -403,8 +397,7 @@ float intercect(float *origin, float *direction, int objOrigin, int *nearObj) {
                 closestDistance = distance;
                 *nearObj = num;   
             }
-        }
-        
+        }     
     }
     return closestDistance;
 }
@@ -422,9 +415,9 @@ float planeIntersection(float *origin, float* direction, float* position, float*
     }
     return distance;
 }
+
 ///////////// INTERSECTION /////////////////////////////////
 float sphereIntersection(float *origin, float* direction, float* position, float radius) {
-
     float distance = INFINITY;
     float diff[3] = {0,0,0};
     v3_subtract(diff, origin, position);
@@ -448,7 +441,7 @@ float sphereIntersection(float *origin, float* direction, float* position, float
 }
 
 ///////////// SHOOT /////////////////////////////////
-void shoot(float *origin, float *direction, float *color, int recLevel) {    
+void shoot(float *origin, float *direction, float *color, int curObj, int recLevel) {    
     // finished recursing
     if (recLevel == 0) {
         return;
@@ -456,7 +449,7 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     
     // get nearest object number and the distance
     int nearObj = -1;
-    float distance = intercect(origin, direction, -1, &nearObj);
+    float distance = intercect(origin, direction, curObj, &nearObj);
 
     // return if there is no nearest object
     if (distance == INFINITY) {  
@@ -465,7 +458,6 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
 
     float reflectColor[3] = {0,0,0};
     float objectColor[3] = {0,0,0};
-
 
     // set new origin at intercection
     float newOrigin[3] = {0,0,0};
@@ -482,8 +474,7 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
         v3_normalize(surfNorm,surfNorm);
         v3_reflect(newDirection, direction, surfNorm);
 
-        shoot(newOrigin, newDirection, reflectColor, recLevel-1); //recurse
-
+        shoot(newOrigin, newDirection, reflectColor, nearObj, recLevel-1); //recurse
     }
 
     assert(objects[nearObj].reflect <= 1);
@@ -491,15 +482,14 @@ void shoot(float *origin, float *direction, float *color, int recLevel) {
     float opacity = 1 - objects[nearObj].reflect;
 
     if (opacity > 0) { 
+
         for (int lightNum = 0; lightNum <= numLights; lightNum++) {
             illuminate(newOrigin, direction, objectColor, nearObj, lightNum);
-			//printf("\nILLUMINATE!\n");
         }
     }
-
-    for (int x = 0; x < 3; x++) {
-        color[x] = opacity * objectColor[x] + reflectColor[x] * objects[nearObj].reflect;
-    }
+    color[0] = (opacity * objectColor[0]) + (reflectColor[0] * objects[nearObj].reflect);
+    color[1] = (opacity * objectColor[1]) + (reflectColor[1] * objects[nearObj].reflect);
+    color[2] = (opacity * objectColor[2]) + (reflectColor[2] * objects[nearObj].reflect);
 }
 
 /////////////   MAIN  ///////////////////////////////
@@ -565,12 +555,14 @@ int main (int argc, char *argv[]) {
             v3_normalize(direction, direction); 
             setArray(finalColor, backgroundColor);
             
-            shoot(origin, direction, finalColor, 7); 
+            shoot(origin, direction, finalColor, -1, 7); 
 
             int location = col*image->width*3+row*3;
-            for (int x = 0; x < 3; x++) { // set color to pixMap
-                image->pixData[location + x] = clamp(finalColor[x] * MAX_COLOR, MAX_COLOR);
-            }
+            
+            image->pixData[location + 0] = clamp(finalColor[0] * MAX_COLOR, MAX_COLOR);
+            image->pixData[location + 1] = clamp(finalColor[1] * MAX_COLOR, MAX_COLOR);
+            image->pixData[location + 2] = clamp(finalColor[2] * MAX_COLOR, MAX_COLOR);
+            
         }
     }
     writeP3(image, output);
