@@ -57,7 +57,7 @@ float sphereIntersection(float *origin, float* direction, float* position, float
 void  shoot(float *origin, float *direction, float *color, int curObj, int recLevel);
  
 
-//TODO: WHITE SPOTS
+//TODO: FIX SPECULAR
 //TODO: TEST FILES
 //TODO: SPOTLIGHT TEST
 
@@ -366,6 +366,7 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     v3_multiply(diffuse, objects[objNum].diffuse, lights[lightNum].color);
     v3_scale(diffuse, v3_dot_product(surfNorm, lightVect));
 
+    //TODO: correct specular value, could be issues with viewVect or reflect vect
     // get specular
     float specular[3] = {0,0,0};
     v3_multiply(specular, objects[objNum].specular, lights[lightNum].color);
@@ -463,16 +464,16 @@ void shoot(float *origin, float *direction, float *color, int curObj, int recLev
     setArray(newOrigin, direction);
     v3_scale(newOrigin, distance);
     v3_add(newOrigin, newOrigin, origin);
-    
-    // set new direction
-    float surfNorm[3] = {0,0,0};
-    float newDirection[3] = {0,0,0};
-    v3_subtract(surfNorm, newOrigin, objects[nearObj].position);
-    v3_normalize(surfNorm,surfNorm);
-    v3_reflect(newDirection, direction, surfNorm);
 
     // trace ray if reflection 
     if (objects[nearObj].reflect > 0) {
+
+		float surfNorm[3] = {0,0,0};
+        float newDirection[3] = {0,0,0};
+        v3_subtract(surfNorm, newOrigin, objects[nearObj].position);
+        v3_normalize(surfNorm,surfNorm);
+        v3_reflect(newDirection, direction, surfNorm);
+
         shoot(newOrigin, newDirection, reflectColor, nearObj, recLevel-1); //recurse
     }
 
@@ -481,8 +482,9 @@ void shoot(float *origin, float *direction, float *color, int curObj, int recLev
     float opacity = 1 - objects[nearObj].reflect;
 
     if (opacity > 0) { 
+
         for (int lightNum = 0; lightNum <= numLights; lightNum++) {
-            illuminate(newOrigin, newDirection, objectColor, nearObj, lightNum);
+            illuminate(newOrigin, direction, objectColor, nearObj, lightNum);
         }
     }
     color[0] = (opacity * objectColor[0]) + (reflectColor[0] * objects[nearObj].reflect);
