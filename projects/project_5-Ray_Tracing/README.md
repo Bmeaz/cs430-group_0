@@ -15,4 +15,6 @@
  
  ## Known Issue
  
-  -No issues were found
+  -The team managed to get the reflection to work but for some reason the spheres have very concentrated yellow, teal, and magenta circle on them.
+  
+  - Along with that, the spotlight functionality does not work as it needs to and discolors many of the shapes.
