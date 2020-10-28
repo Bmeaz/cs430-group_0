@@ -57,9 +57,6 @@ float sphereIntersection(float *origin, float* direction, float* position, float
 void  shoot(float *origin, float *direction, float *color, int curObj, int recLevel);
  
 
-//TODO: FIX SPECULAR
-//TODO: TEST FILES
-//TODO: SPOTLIGHT TEST
 
 ///////////// CHECKVALUE /////////////////////////////////
 void checkValue(char str[], float *arr) {
@@ -366,7 +363,6 @@ void illuminate(float *origin, float *direction, float *color, int objNum, int l
     v3_multiply(diffuse, objects[objNum].diffuse, lights[lightNum].color);
     v3_scale(diffuse, v3_dot_product(surfNorm, lightVect));
 
-    //TODO: correct specular value, could be issues with viewVect or reflect vect
     // get specular
     float specular[3] = {0,0,0};
     v3_multiply(specular, objects[objNum].specular, lights[lightNum].color);
