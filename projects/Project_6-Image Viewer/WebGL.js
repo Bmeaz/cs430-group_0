@@ -46,44 +46,44 @@ var keyBinds = [
     execute: () => translation.y -= TRANSLATE
   }, {
     description: "Rotate clockwise",
-    key: ["KeyQ", 
+    key: ["KeyQ"], 
     execute: () => rotation -= ROTATE
   }, {
     description: "Rotate counter-clockwise",
-    key: ["KeyE"], 
+    key: ["KeyW"], 
     execute: () => rotation += ROTATE
   }, {
     description: "Shear x (positive)",
-    key: ["KeyJ"], 
+    key: ["KeyE"], 
     execute: () => shear.x += SHEAR
   }, {
     description: "Shear y (negative)",
-    key: ["KeyI"],
+    key: ["KeyR"],
     execute: () => shear.y -= SHEAR
   }, {
     description: "Shear x (negative)",
-    key: ["KeyL"],
+    key: ["KeyT"],
     execute: () => shear.x -= SHEAR
   }, {
     description: "Shear y (positive)",
-    key: ["KeyK"],
+    key: ["KeyY"],
     execute: () => shear.y += SHEAR
   }, {
     description: "Scale up",
-    keyc: ["KeyR"],
+    keyc: ["KeyU"],
     execute: () => scale += SCALE
   }, {
     description: "Scale Down",
-    key: ["KeyF"], 
+    key: ["KeyI"], 
     execute: () => scale -= SCALE
   }
 ]
 
-// Add window event listeners to save keypresses
+// save keypress
 window.addEventListener("keydown", function(e) {
   key[e.code] = true;
 
-  // If we are executing an action, prevent default browser behavior
+  // prevent default browser behavior
   if (getPressedKeyBindings().length)
     e.preventDefault();
 });
