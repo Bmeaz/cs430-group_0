@@ -7,7 +7,8 @@
   uniform vec2 shear;
   uniform vec2 texture
 
-  //uniforms
+  //uniforms....prog is not set yet but it will be initialized 
+  //as a GL program at some point
   var resCoord = gl.getUniformLocation(prog, "resolution");
   var textureCoord = gl.getUniformLocation(prog, "texture");
   var translateCoord = gl.getUniformLocation(prog, "translation");
