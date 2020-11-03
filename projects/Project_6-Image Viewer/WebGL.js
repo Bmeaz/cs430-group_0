@@ -1,4 +1,19 @@
-//TODO: set texture coordinates, set uniforms, load shaders
+//TODO: set texture coordinates, set & load program, load shaders
+
+  uniform vec2 resolution;
+  uniform vec2 translation;
+  uniform vec2 rotation;
+  uniform vec2 scale;
+  uniform vec2 shear;
+  uniform vec2 texture
+
+  //uniforms
+  var resCoord = gl.getUniformLocation(prog, "resolution");
+  var textureCoord = gl.getUniformLocation(prog, "texture");
+  var translateCoord = gl.getUniformLocation(prog, "translation");
+  var rotationCoord = gl.getUniformLocation(prog, "rotation");
+  var scaleCoord = gl.getUniformLocation(prog, "scale");
+  var shearCoord = gl.getUniformLocation(prog, "shear");
 
 function setTexture(url) {
     var texture = gl.createTexture();
@@ -40,13 +55,13 @@ function renderImage(time) {
     gl.useProgram(program);
     gl.bindVertexArray(vao);
     //apply uniforms
-    gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
-    gl.uniform1i(textureLocation, 0);
+    gl.uniform2f(resCoord, gl.canvas.width, gl.canvas.height);
+    gl.uniform1i(textureCoord, 0);
     //transform uniforms
-    gl.uniform2f(translationLocation, translation.x, translation.y);
-    gl.uniform1f(rotationLocation, rotation);
-    gl.uniform1f(scaleLocation, scale);
-    gl.uniform2f(shearLocation, shear.x, shear.y);
+    gl.uniform2f(translateCoord, translation.x, translation.y);
+    gl.uniform1f(rotateCoord, rotation);
+    gl.uniform1f(scaleCoord, scale);
+    gl.uniform2f(shearCoord, shear.x, shear.y);
     //apply image to texture
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, image);
