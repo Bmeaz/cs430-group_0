@@ -1,3 +1,21 @@
+//TODO: set texture coordinates, set uniforms, load shaders
+
+function setTexture(url) {
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 245, 157, 255]));
+    var img = new Image();
+    img.addEventListener("load", function() {
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      gl.generateMipmap(gl.TEXTURE_2D);
+    });
+    img.src = url;
+    return texture;
+  }
+
+  var image = setTexture("picture.jpg");
+
 function updateImage() {
   getPressedKeys().forEach(action => action.execute());
 }
@@ -6,6 +24,34 @@ function getPressedKeys() {
   return keyBindings.filter(action =>
     action.keys.some(binding => keys[binding]));
 }
+
+function renderImage(time) {
+    updateTransformations(); 
+    draw();
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
+
+ function drawImage() {
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(program);
+    gl.bindVertexArray(vao);
+    //apply uniforms
+    gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+    gl.uniform1i(textureLocation, 0);
+    //transform uniforms
+    gl.uniform2f(translationLocation, translation.x, translation.y);
+    gl.uniform1f(rotationLocation, rotation);
+    gl.uniform1f(scaleLocation, scale);
+    gl.uniform2f(shearLocation, shear.x, shear.y);
+    //apply image to texture
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, image);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
 
 const TRANSLATE = 0.01;
 const ROTATE = 0.01;
@@ -20,7 +66,7 @@ var translation = {
   y: 0.5
 };
 
-var rotation = Math.PI;
+var rotation = 3.141593;
 var scale = 1.0;
 var shear = {
   x: 0.0,
