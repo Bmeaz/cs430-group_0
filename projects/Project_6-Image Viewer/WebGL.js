@@ -37,8 +37,8 @@ function updateImage() {
 }
 
 function getPressedKeys() {
-  return keyBindings.filter(action =>
-    action.keys.some(binding => keys[binding]));
+  return keyBinds.filter(action =>
+    action.buttons.some(binding => buttons[binding]));
 }
 
 function renderImage(time) {
@@ -50,13 +50,13 @@ function renderImage(time) {
 }
 
  function drawImage() {
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.page.width, gl.page.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);
     gl.bindVertexArray(vao);
     //apply uniforms
-    gl.uniform2f(resCoord, gl.canvas.width, gl.canvas.height);
+    gl.uniform2f(resCoord, gl.page.width, gl.page.height);
     gl.uniform1i(textureCoord, 0);
     //transform uniforms
     gl.uniform2f(translateCoord, translation.x, translation.y);
@@ -92,70 +92,70 @@ var shear = {
 var keyBinds = [
   {
     description: "Move left",
-    key: ["ArrowLeft"], 
+    button: ["ArrowLeft"], 
     execute: () => translation.x -= TRANSLATE
   }, {
     description: "Move up",
-    key: ["ArrowUp"], 
+    button: ["ArrowUp"], 
     execute: () => translation.y += TRANSLATE
   }, {
     description: "Move right",
-    key: ["ArrowRight"], 
+    button: ["ArrowRight"], 
     execute: () => translation.x += TRANSLATE
   }, {
     description: "Move down",
-    key: ["ArrowDown"], 
+    button: ["ArrowDown"], 
     execute: () => translation.y -= TRANSLATE
   }, {
     description: "Rotate clockwise",
-    key: ["KeyQ"], 
+    button: ["KeyQ"], 
     execute: () => rotation -= ROTATE
   }, {
     description: "Rotate counter-clockwise",
-    key: ["KeyW"], 
+    button: ["KeyW"], 
     execute: () => rotation += ROTATE
   }, {
     description: "Shear x (positive)",
-    key: ["KeyE"], 
+    button: ["KeyE"], 
     execute: () => shear.x += SHEAR
   }, {
     description: "Shear y (negative)",
-    key: ["KeyR"],
+    button: ["KeyR"],
     execute: () => shear.y -= SHEAR
   }, {
     description: "Shear x (negative)",
-    key: ["KeyT"],
+    button: ["KeyT"],
     execute: () => shear.x -= SHEAR
   }, {
     description: "Shear y (positive)",
-    key: ["KeyY"],
+    button: ["KeyY"],
     execute: () => shear.y += SHEAR
   }, {
     description: "Scale up",
-    keyc: ["KeyU"],
+    button: ["KeyU"],
     execute: () => scale += SCALE
   }, {
     description: "Scale Down",
-    key: ["KeyI"], 
+    button: ["KeyI"], 
     execute: () => scale -= SCALE
   }
 ]
 
 // save keypress
 window.addEventListener("keydown", function(e) {
-  key[e.code] = true;
+  button[e.code] = true;
 
   // prevent default browser behavior
-  if (getPressedKeyBindings().length)
+  if (getPressedKeys().length)
     e.preventDefault();
 });
 window.addEventListener("keyup", function(e) {
-  delete key[e.code];
+  delete button[e.code];
 });
 
-document.getElementById("js-keyBinds").innerHTML += keyBinds.map(action => `
+document.getElementById("js-Binds").innerHTML += keyBinds.map(action => `
     <div>
-      ${action.description} - <b>[${action.key.join(", ")}]</b>
+      ${action.description} - <b>[${action.button.join(", ")}]</b>
     </div>
   `).join("");
 
