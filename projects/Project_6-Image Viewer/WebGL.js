@@ -30,6 +30,7 @@ function setTexture(url) {
     return texture;
   }
 
+  //havnt actually added an image file yet "picture.jpg" is placeholder file name
   var image = setTexture("picture.jpg");
 
 function updateImage() {
