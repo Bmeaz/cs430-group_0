@@ -1,4 +1,7 @@
-//TODO: set texture coordinates, set & load program, load shaders
+const vertexShaderSource = `#version 300 es
+const fragmentShaderSource = `#version 300 es
+
+//TODO: set texture coordinates, set & load program, load shaders, create transformation matrix
 
   uniform vec2 resolution;
   uniform vec2 translation;
